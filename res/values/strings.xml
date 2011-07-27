@@ -18,11 +18,13 @@
     <string name="solveCube">Solve</string>
     <string name="invalidCube">This cube is invalid/cannot be solved.</string>
     <string name="about">About</string>
-    <string name="aboutText">"By: DroidTools &lt;droidtools@gmail.com>
-
+    <string name="aboutText">"By: DroidTools &lt;droidtools@gmail.com&gt;
+    
 Native C Solver by Eric Dietz &lt;http://www.wrongway.org>
 
-Animated Cube by Josef Jelinek &lt;http://software.rubikscube.info/AnimCube/>"</string>
+Animated Cube by Josef Jelinek &lt;http://software.rubikscube.info/AnimCube/&gt; 
+
+Source Code available at &lt;https://github.com/nemothekid/Android-Rubik-s-Cube-Solver&gt;"</string>
     <string name="tooColors">There are more than 6 colors on this cube. Please make sure each color on this face has the same color number (that is also identical to the color number of the same color on other faces).</string>
     <string name="checkColors">The ungrouped colors column must be cleared and each face must have atleast on facelet color.</string>
     <string name="actionTitle">"Rubik's Cube Solver"</string>
