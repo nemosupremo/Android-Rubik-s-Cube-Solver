@@ -1218,7 +1218,7 @@ public class RubikCube {
 		return isSolved();
 	}
 
-	public boolean solveCube(android.content.Context ctx) {
+	public boolean solveCube() {
 		startRecord();
 		RubikFace[] faces = getFaces(cube.get("FRONT"));
 		RubikFace res;
