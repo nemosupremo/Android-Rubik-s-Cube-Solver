@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.markupartist.android.widget.ActionBar android:id="@+id/actionbar" style="@style/ActionBar" />
+    <LinearLayout android:orientation="horizontal" android:id="@+id/checkPageRoot" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <ListView android:id="@+id/colorsList" android:layout_width="wrap_content" android:layout_height="fill_parent" android:layout_weight="2.0" />
+        <LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="1.0">
+            <TextView android:textSize="12.0dip" android:textStyle="italic" android:layout_gravity="center" android:id="@+id/textView1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Press a facelet to change its color." />
+            <GridView android:gravity="center" android:id="@+id/colorsGrid" android:layout_width="wrap_content" android:layout_height="wrap_content" android:numColumns="3" />
+            <LinearLayout android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content">
+                <Button android:id="@+id/tryAgain" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/tryAgain" android:layout_weight="1.0" />
+                <Button android:id="@+id/nextFace" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/nextFace" android:layout_weight="1.0" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

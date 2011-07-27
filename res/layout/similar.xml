@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:id="@+id/layout_root" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textAppearance="?android:textAppearanceSmall" android:textStyle="italic" android:layout_gravity="center" android:id="@+id/textView1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/selectSimilar" />
+    <LinearLayout android:id="@+id/linearLayout1" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1.0">
+        <LinearLayout android:orientation="vertical" android:id="@+id/linearLayout4" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1.0">
+            <TextView android:textAppearance="?android:textAppearanceSmall" android:layout_gravity="center" android:id="@+id/textView1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ungrouped Colors" />
+            <ListView android:id="@+id/ungroupedColors" android:layout_width="fill_parent" android:layout_height="100.0dip" android:layout_weight="1.0" />
+        </LinearLayout>
+        <ImageView android:layout_gravity="center_vertical" android:id="@+id/imageView1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_media_play" />
+        <LinearLayout android:orientation="vertical" android:id="@+id/linearLayout5" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1.0">
+            <TextView android:textAppearance="?android:textAppearanceSmall" android:layout_gravity="center" android:id="@+id/textView1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Grouped Colors" />
+            <ListView android:id="@+id/groupedColors" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/linearLayout2" android:layout_width="fill_parent" android:layout_height="wrap_content">
+        <Button android:id="@+id/prevSimilar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/prev" />
+        <LinearLayout android:layout_gravity="center" android:orientation="vertical" android:id="@+id/linearLayout3" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="1.0">
+            <TextView android:textAppearance="?android:textAppearanceMedium" android:layout_gravity="center" android:id="@+id/similarFaceNo" android:layout_width="wrap_content" android:layout_height="fill_parent" android:text="Face 1/6" android:layout_weight="0.0" />
+        </LinearLayout>
+        <Button android:id="@+id/nextSimilar" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/next" />
+    </LinearLayout>
+</LinearLayout>

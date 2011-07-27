@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:gravity="center_horizontal" android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <TextView android:textSize="40.0dip" android:id="@+id/solvingText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@+id/solvingText" />
+    <ProgressBar android:id="@+id/ProgressBar01" android:layout_width="fill_parent" android:layout_height="wrap_content" android:maxHeight="20.0dip" android:indeterminateOnly="false" android:indeterminateDrawable="@android:drawable/progress_indeterminate_horizontal" android:progressDrawable="@android:drawable/progress_horizontal" android:minHeight="20.0dip" />
+</LinearLayout>

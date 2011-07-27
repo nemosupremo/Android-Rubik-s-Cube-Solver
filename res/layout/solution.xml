@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.markupartist.android.widget.ActionBar android:id="@+id/actionbar" style="@style/ActionBar" />
+    <Button android:layout_gravity="right" android:id="@+id/stepSolutionButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="3D Step By Step" />
+    <GridView android:id="@+id/solutionGrid" android:layout_width="fill_parent" android:layout_height="fill_parent" android:horizontalSpacing="5.0dip" android:verticalSpacing="5.0dip" android:columnWidth="65.0dip" android:numColumns="auto_fit" />
+</LinearLayout>

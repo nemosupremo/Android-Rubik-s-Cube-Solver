@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape android:shape="rectangle"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <gradient android:startColor="@color/actionbar_background_start" android:endColor="@color/actionbar_background_end" android:angle="-90.0" />
+</shape>

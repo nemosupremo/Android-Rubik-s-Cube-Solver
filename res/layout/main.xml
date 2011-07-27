@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <FrameLayout android:id="@+id/preview" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1.0" />
+    <RelativeLayout android:gravity="right|center" android:id="@+id/content" android:layout_width="fill_parent" android:layout_height="fill_parent">
+        <ImageButton android:enabled="false" android:id="@+id/media" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_menu_camera" />
+    </RelativeLayout>
+    <RelativeLayout android:id="@+id/guides" android:layout_width="fill_parent" android:layout_height="fill_parent" />
+</FrameLayout>

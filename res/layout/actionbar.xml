@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:orientation="horizontal" android:id="@+id/screen" android:layout_width="fill_parent" android:layout_height="@dimen/actionbar_height"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <RelativeLayout android:orientation="horizontal" android:id="@+id/actionbar_home" android:visibility="visible" android:layout_width="wrap_content" android:layout_height="@dimen/actionbar_height" android:layout_alignParentLeft="true" android:layout_centerVertical="true">
+        <ImageView android:id="@+id/actionbar_home_logo" android:background="@drawable/actionbar_btn" android:padding="0.0dip" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="@dimen/actionbar_height" style="@style/ActionBarHomeLogo" />
+        <RelativeLayout android:orientation="horizontal" android:id="@+id/actionbar_home_bg" android:background="@color/actionbar_separator" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="@dimen/actionbar_height" android:layout_alignParentLeft="true" android:layout_centerVertical="true">
+            <ImageButton android:id="@+id/actionbar_home_btn" android:background="@drawable/actionbar_btn" style="@style/ActionBarHomeItem" />
+        </RelativeLayout>
+        <ImageView android:id="@+id/actionbar_home_is_back" android:background="@drawable/actionbar_back_indicator" android:padding="0.0dip" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_toLeftOf="@+id/actionbar_home_btn" android:layout_alignParentTop="true" />
+        <LinearLayout android:id="@+id/actionbar_actions" android:background="@color/actionbar_separator" android:padding="0.0dip" android:layout_width="wrap_content" android:layout_height="@dimen/actionbar_height" android:layout_margin="0.0dip" android:layout_alignParentRight="true" android:layout_centerVertical="true" />
+        <RelativeLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_toLeftOf="@+id/actionbar_actions" android:layout_toRightOf="@+id/actionbar_home_bg" android:layout_centerVertical="true" android:layout_alignWithParentIfMissing="true">
+            <ProgressBar android:id="@+id/actionbar_progress" android:paddingRight="7.0dip" android:visibility="gone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:indeterminateOnly="true" android:layout_alignParentRight="true" android:layout_centerVertical="true" style="@style/ActionBarProgressBar" />
+            <com.markupartist.android.widget.ScrollingTextView android:textSize="16.0dip" android:textStyle="bold" android:textColor="@color/actionbar_title" android:ellipsize="marquee" android:id="@+id/actionbar_title" android:paddingLeft="10.0dip" android:paddingRight="10.0dip" android:layout_width="wrap_content" android:layout_height="wrap_content" android:lines="1" android:scrollHorizontally="true" android:layout_toLeftOf="@+id/actionbar_progress" android:layout_alignParentLeft="true" android:marqueeRepeatLimit="marquee_forever" />
+        </RelativeLayout>
+    </RelativeLayout>
+</RelativeLayout>

@@ -1,0 +1,11 @@
+.classpath
+.project
+.settings
+bin
+gen
+obj
+target
+local.properties
+build.xml
+proguard.cfg
+.apk

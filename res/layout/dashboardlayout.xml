@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.markupartist.android.widget.ActionBar android:id="@+id/actionbar" style="@style/ActionBar" />
+    <com.droidtools.rubiksolver.DashboardLayout android:id="@+id/dashboard" android:layout_width="fill_parent" android:layout_height="fill_parent"
+      xmlns:android="http://schemas.android.com/apk/res/android">
+        <Button android:id="@+id/home_btn_instructions" android:text="Instructions" android:drawableTop="@drawable/dashinstructions" style="@style/DashboardButton" />
+        <Button android:id="@+id/home_btn_capture" android:text="Capture" android:drawableTop="@drawable/dashcapture" style="@style/DashboardButton" />
+        <Button android:id="@+id/home_btn_history" android:text="History" android:drawableTop="@drawable/dashhistory" style="@style/DashboardButton" />
+        <Button android:id="@+id/home_btn_about" android:text="About" android:drawableTop="@drawable/dashabout" style="@style/DashboardButton" />
+    </com.droidtools.rubiksolver.DashboardLayout>
+</LinearLayout>

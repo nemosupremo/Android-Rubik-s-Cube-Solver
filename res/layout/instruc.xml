@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="fill_parent"
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <com.markupartist.android.widget.ActionBar android:id="@+id/actionbar" style="@style/ActionBar" />
+    <com.droidtools.rubiksolver.CubeSurface android:id="@+id/cubesurface" android:layout_width="fill_parent" android:layout_height="fill_parent" android:layout_weight="1.0" />
+    <TextView android:layout_gravity="center" android:id="@+id/counterText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="1/6" />
+    <LinearLayout android:gravity="center" android:orientation="horizontal" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="0.0">
+        <ImageButton android:id="@+id/stepBack" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_media_previous" />
+        <LinearLayout android:orientation="vertical" android:layout_width="fill_parent" android:layout_height="wrap_content" android:layout_weight="1.0">
+            <TextView android:layout_gravity="center" android:id="@+id/infoText" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/insStep1" />
+        </LinearLayout>
+        <ImageButton android:id="@+id/stepForward" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@android:drawable/ic_media_next" />
+    </LinearLayout>
+</LinearLayout>

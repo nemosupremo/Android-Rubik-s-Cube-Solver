@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:icon="@drawable/ic_menu_back" android:id="@+id/menuTryAgain" android:title="@string/tryAgain" />
+    <item android:icon="@drawable/ic_menu_forward" android:id="@+id/menuSolveCube" android:title="@string/solveCube" />
+</menu>
