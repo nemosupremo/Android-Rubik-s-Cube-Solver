@@ -4,3 +4,4 @@ For Android OS 2.1 (SDK Level 7)
 Notes:
     Native C Solver by Eric Dietz <http://www.wrongway.org> (Licensed under GPL)
     Animated Cube by Josef Jelinek <http://software.rubikscube.info/AnimCube/>
+    Requires Android Actionbar by Johan Nilsson <https://github.com/johannilsson/android-actionbar>
