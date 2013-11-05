@@ -60,6 +60,7 @@ public class Instructions extends Activity {
 		wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNotDimScreen");
 		position = 0;
 		updateInfoText(position);
+		counterText.setText(String.format("%d/%d", position+1, 7));
 		
 		cubeSurface.init( (new RubikCube()).getCubeState(), colorMap);
 	}
@@ -113,9 +114,15 @@ public class Instructions extends Activity {
 	
 	protected void next() {
 		//Log.d("HELLO", "I AM HERE1");
+		if (position >= 6 || nexting || preving) return;
 		updateInfoText(position+1);
-		counterText.setText(String.format("%d/%d", position+1, 6));
-		if (position >= 5 || nexting || preving) return;
+		counterText.setText(String.format("%d/%d", position+2, 7));
+		
+		// Only animate for the first 6 steps.
+		if (position >= 5) {
+			incrPosition();
+			return;
+		}
 		//Log.d("HELLO", "I AM HERE2");
 		nexting = true;
 		new Thread(new Runnable() {
@@ -144,7 +151,13 @@ public class Instructions extends Activity {
 	protected void prev() {
 		if (position <= 0 || nexting || preving) return;
 		updateInfoText(position-1);
-		counterText.setText(String.format("%d/%d", position+1, 6));
+		counterText.setText(String.format("%d/%d", position, 7));
+		
+		// Only animate for the first 6 steps.
+		if (position >= 6) {
+			decrPosition();
+			return;
+		}
 		preving = true;
 		new Thread(new Runnable() {
 
