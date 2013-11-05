@@ -5,11 +5,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -25,7 +27,7 @@ import android.util.Log;
 public class ColorDecoder implements Parcelable {
 	//private List<HColor> colors;
 	//private List<Bitmap> images;
-	private Map<Byte, Parcelable[]> ids;
+	private ConcurrentMap<Byte, Parcelable[]> ids;
 	byte firstNewCol;
 	byte nextId;
 	private List<Byte> idArray;
@@ -38,7 +40,7 @@ public class ColorDecoder implements Parcelable {
 	public ColorDecoder(String cache) {
 		//colors = new ArrayList<HColor>();
 		//images = new ArrayList<Bitmap>();
-		ids = new HashMap<Byte, Parcelable[]>();
+		ids = new ConcurrentHashMap<Byte, Parcelable[]>();
 		idArray = new ArrayList<Byte>();
 		//firstNewCol = 0;
 		nextId = 0;
@@ -138,8 +140,8 @@ public class ColorDecoder implements Parcelable {
 	}
 	
 	public Bitmap getBitmap(byte key) {
-		Log.d("DECODER", "Trying to access key "+key);
-		Log.d("DECODER", "ids size = "+ids.size());
+		Log.d("DECODER", "Trying to access key " + key);
+		Log.d("DECODER", "ids size = " + ids.size());
 		return (Bitmap)ids.get(key)[1];
 	}
 	
@@ -147,16 +149,20 @@ public class ColorDecoder implements Parcelable {
 		//colors.remove(position);
 		//images.remove(position);
 		Log.d("DECODER", "Removing key "+key);
-		HColor v = (HColor) ids.get(key)[0];
-		try {
+		Parcelable[] color = ids.get(key);
+		HColor v = (HColor) color[0];
+		//try {
 			File outPath = new File(cacheDir, v.toString());
 			if (outPath.exists()) {
-				outPath.delete();
+				if (!outPath.delete()) {
+					Log.e("DECODER", "Failed to delete file: " + outPath.getAbsolutePath());
+				}
 			}
-		} catch (Exception e)
-		{
+		// } catch (Exception e) {}
+		if (!ids.remove(key, color)) {
+			throw new ConcurrentModificationException(
+					"Value at Key " + key + " was modified while trying to be removed.");
 		}
-		ids.remove(key);
 		idArray = new ArrayList<Byte>(ids.keySet());
 		Collections.sort(idArray);
 	}
@@ -181,26 +187,33 @@ public class ColorDecoder implements Parcelable {
 	{
 		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
 			HColor v = (HColor) entry.getValue()[0];
-			try {
+			// try {
 				File outPath = new File(cacheDir, v.toString());
 				if (outPath.exists()) {
-					outPath.delete();
+					if (!outPath.delete()) {
+						Log.e("DECODER", "Failed to delete file: " + outPath.getAbsolutePath());
+					}
 				}
-			} catch (Exception e)
-			{
-			}
+			//} catch (Exception e)
+			//{
+			//}
 		}
-		
 	}
 	
 	public byte[] colorArray() {
 		byte[] ret = new byte[5*ids.size()];
 		int i = 0;
 		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
+			if (i >= ret.length) {
+				throw new ConcurrentModificationException("Keys were added to ids while trying to create the colorArray");
+			}
 			ret[i] = entry.getKey();
 			i++;
 			System.arraycopy(((HColor)entry.getValue()[0]).asByteArray(), 0, ret, i, ((HColor)entry.getValue()[0]).asByteArray().length);
 			i += ((HColor)entry.getValue()[0]).asByteArray().length;
+		}
+		if (i < ret.length) {
+			throw new ConcurrentModificationException("Keys were removed from ids while trying to create the colorArray");
 		}
 		return ret;
 	}
