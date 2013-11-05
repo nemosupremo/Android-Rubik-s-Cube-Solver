@@ -55,10 +55,10 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	boolean mRunning = false;
 	SparseIntArray colorMap;
 
-	private static final double[] EYE = { 0.0, 0.0, -1.0 };
-	private static final double[] EYE_X = { 1.0, 0.0, 0.0 }; // (sideways)
-	// TODO(bbrown): Not sure why this isn't 0,1,0 or 0,-1,0
-	private static final double[] EYE_Y = new double[3]; // (vertical)
+	// Current eye vectors
+	private final double[] eye = { 0.0, 0.0, -1.0 };
+	private final double[] eyeX = { 1.0, 0.0, 0.0 }; // (sideways)
+	private final double[] eyeY = new double[3]; // (vertical)
 	
 	private final double[] initialEye = new double[3];
 	private final double[] initialEyeX = new double[3];
@@ -356,24 +356,24 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			case 'd':
 				angle = -angle;
 			case 'u':
-				vRotY(EYE, angle);
-				vRotY(EYE_X, angle);
+				vRotY(eye, angle);
+				vRotY(eyeX, angle);
 				break;
 			case 'f':
 				angle = -angle;
 			case 'b':
-				vRotZ(EYE, angle);
-				vRotZ(EYE_X, angle);
+				vRotZ(eye, angle);
+				vRotZ(eyeX, angle);
 				break;
 			case 'l':
 				angle = -angle;
 			case 'r':
-				vRotX(EYE, angle);
-				vRotX(EYE_X, angle);
+				vRotX(eye, angle);
+				vRotX(eyeX, angle);
 				break;
 			}
 		}
-		vNorm(vMul(EYE_Y, EYE, EYE_X)); // fix eyeY
+		vNorm(vMul(eyeY, eye, eyeX)); // fix eyeY
 		speed = 40;
 		doubleSpeed = speed * 3 / 2;
 		persp = 2;
@@ -384,9 +384,9 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			for (int j = 0; j < 9; j++)
 				initialCube[i][j] = cube[i][j];
 		for (int i = 0; i < 3; i++) {
-			initialEye[i] = EYE[i];
-			initialEyeX[i] = EYE_X[i];
-			initialEyeY[i] = EYE_Y[i];
+			initialEye[i] = eye[i];
+			initialEyeX[i] = eyeX[i];
+			initialEyeY[i] = eyeY[i];
 		}
 		//move = new int[0][0];
 	}
@@ -499,7 +499,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		// synchronized (animThread) {
 		// dragAreas = 0;
 		if (naturalForDraw) // compact cube
-			fixBlock(c, EYE, EYE_X, EYE_Y, CUBE_BLOCKS, 3, drawCube); // draw cube and fill
+			fixBlock(c, eye, eyeX, eyeY, CUBE_BLOCKS, 3, drawCube); // draw cube and fill
 															// drag areas
 		else { // in twisted state
 				// compute top observer
@@ -511,10 +511,10 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 				tempEyeX[i] = 0;
 				for (int j = 0; j < 3; j++) {
 					int axis = twistedLayerForDraw / 2;
-					tempEye[i] += EYE[j]
+					tempEye[i] += eye[j]
 							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosA + ROTATION_SIN[axis][i][j]
 									* sinA);
-					tempEyeX[i] += EYE_X[j]
+					tempEyeX[i] += eyeX[j]
 							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosA + ROTATION_SIN[axis][i][j]
 									* sinA);
 				}
@@ -529,18 +529,18 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 				tempEyeX2[i] = 0;
 				for (int j = 0; j < 3; j++) {
 					int axis = twistedLayerForDraw / 2;
-					tempEye2[i] += EYE[j]
+					tempEye2[i] += eye[j]
 							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosB + ROTATION_SIN[axis][i][j]
 									* sinB);
-					tempEyeX2[i] += EYE_X[j]
+					tempEyeX2[i] += eyeX[j]
 							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosB + ROTATION_SIN[axis][i][j]
 									* sinB);
 				}
 			}
 			vMul(tempEyeY2, tempEye2, tempEyeX2);
-			eyeArray[0] = EYE;
-			eyeArrayX[0] = EYE_X;
-			eyeArrayY[0] = EYE_Y;
+			eyeArray[0] = eye;
+			eyeArrayX[0] = eyeX;
+			eyeArrayY[0] = eyeY;
 			eyeArray[1] = tempEye;
 			eyeArrayX[1] = tempEyeX;
 			eyeArrayY[1] = tempEyeY;
@@ -549,10 +549,10 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			eyeArrayY[2] = tempEyeY2;
 			
 			// perspective corrections
-			vSub(vScale(vCopy(perspEye, EYE), 5.0 + persp),
+			vSub(vScale(vCopy(perspEye, eye), 5.0 + persp),
 					vScale(vCopy(perspNormal, FACE_NORMALS[twistedLayerForDraw]),
 							1.0 / 3.0));
-			vSub(vScale(vCopy(perspEyeI, EYE), 5.0 + persp),
+			vSub(vScale(vCopy(perspEyeI, eye), 5.0 + persp),
 					vScale(vCopy(perspNormal, FACE_NORMALS[twistedLayerForDraw ^ 1]),
 							1.0 / 3.0));
 			double topProd = vProd(perspEye, FACE_NORMALS[twistedLayerForDraw]);
