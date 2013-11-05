@@ -46,7 +46,11 @@ public class MoveNavigator extends SurfaceView implements
 			icons.put(entry.getKey(), icon);
 		}
 		
-		drawThread = new Thread(new Runnable() {
+		drawThread = createDrawThread();
+	}
+	
+	private Thread createDrawThread() {
+		return new Thread(new Runnable() {
 			@Override
 			public void run() {
 				while (mRunning) {
@@ -97,13 +101,15 @@ public class MoveNavigator extends SurfaceView implements
 	public void surfaceCreated(SurfaceHolder holder) {
 		if (!isInEditMode()) {
 			setRunning(true);
+			if (drawThread == null) {
+				drawThread = createDrawThread();
+			}
 			drawThread.start();
 		}
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-		
 		boolean retry = true;
 		setRunning(false);
 		retry = true;
@@ -114,6 +120,7 @@ public class MoveNavigator extends SurfaceView implements
 			} catch (InterruptedException e) {
 			}
 		}
+		drawThread = null;
 		Log.d("SURFACE", "draw thread dead");
 	}
 	

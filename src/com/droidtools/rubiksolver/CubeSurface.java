@@ -293,7 +293,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		surfaceHolder.addCallback(this);
 		setFocusable(true); // make sure we get key events
 	}
-	
+
 	public void init(RubikCube.CubeState state, SparseIntArray colorMap) {
 		init(state.toAnimCubeState(), colorMap);
 	}
@@ -313,32 +313,8 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	public void init(byte[] state, SparseIntArray colorMap) {
 		this.colorMap = colorMap;
 		String param;
-		animThread = new Thread(this, "Cube Animator");
-		drawThread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (mRunning) {
-					Canvas c = null;
-					try {
-						c = surfaceHolder.lockCanvas(null);
-						synchronized (surfaceHolder) {
-							if (c != null) {
-								doDraw(c);
-							}
-						}
-					} finally {
-						// do this in a finally so that if an exception is
-						// thrown
-						// during the above, we don't leave the Surface in an
-						// inconsistent state
-						if (c != null) {
-							surfaceHolder.unlockCanvasAndPost(c);
-						}
-					}
-				}
-			}
-
-		}, "Cube Drawer");
+		animThread = CreateAnimationThread();
+		drawThread = CreateDrawThread();
 
 		//byte[] state = cubestate.toAnimCubeState();
 		int k = 0;
@@ -401,6 +377,38 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			animThread.notify();
 		}
 	}
+	
+	private Thread CreateDrawThread() {
+		return new Thread(new Runnable() {
+			@Override
+			public void run() {
+				while (mRunning) {
+					Canvas c = null;
+					try {
+						c = surfaceHolder.lockCanvas(null);
+						synchronized (surfaceHolder) {
+							if (c != null) {
+								doDraw(c);
+							}
+						}
+					} finally {
+						// do this in a finally so that if an exception is
+						// thrown
+						// during the above, we don't leave the Surface in an
+						// inconsistent state
+						if (c != null) {
+							surfaceHolder.unlockCanvasAndPost(c);
+						}
+					}
+				}
+			}
+
+		}, "Cube Drawer");
+	}
+
+	private Thread CreateAnimationThread() {
+		return new Thread(this, "Cube Animator");
+	}
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
@@ -418,6 +426,12 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	public void surfaceCreated(SurfaceHolder holder) {
 		if (!isInEditMode()) {
 			setRunning(true);
+			if (animThread == null) {
+				animThread = CreateAnimationThread();
+			}
+			if (drawThread == null) {
+				drawThread = CreateDrawThread();
+			}
 			animThread.start();
 			drawThread.start();
 		}
@@ -437,6 +451,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			} catch (InterruptedException e) {
 			}
 		}
+		animThread = null;
 		Log.d("SURFACE", "Anim thread dead");
 		retry = true;
 		while (retry) {
@@ -446,6 +461,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			} catch (InterruptedException e) {
 			}
 		}
+		drawThread = null;
 		Log.d("SURFACE", "draw thread dead");
 	}
 
