@@ -369,45 +369,45 @@ public class ColorDecoder implements Parcelable {
 		
 	}
 
-//	private ColorDecoder(Parcel in) {
-//		this(in.readString());
-//		//in.readTypedList(colors, HColor.CREATOR);
-//		//in.readTypedList(images, Bitmap.CREATOR);
-//		//in.readMap(ids, Map.class.getClassLoader());
-//		//Object[] keys = in.readArray(Integer.class.getClassLoader());
-//		int bysz = in.readInt();
-//		byte[] keys = new byte[bysz]; 
-//		in.readByteArray(keys);
-//		Bundle b = in.readBundle();
-//		for (int i=0; i<keys.length; i++) {
-//			b.setClassLoader(HColor.class.getClassLoader());
-//			Parcelable[] v = b.getParcelableArray(""+keys[i]);
-//			//int[] colors = new int[100*100];
-//			//java.util.Arrays.fill(colors, 0, 100*100, ((HColor)v[0]).getColor());
-//			//Parcelable[] tw = {v[0], Bitmap.createBitmap(colors, 100, 100, Bitmap.Config.ARGB_8888)};
-//			File inPath = new File(cacheDir, ((HColor)v[0]).toString());
-//			FileInputStream inStream;
-//			Bitmap f = null;
-//			try {
-//				inStream = new FileInputStream(inPath);
-//				f = BitmapFactory.decodeStream(inStream);
-//				inStream.close();
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
-//			
-//			//((Bitmap)entry.getValue()[1]).compress(Bitmap.CompressFormat.JPEG, 90, outStream);
-//			//ids.put(keys[i], b.getParcelableArray(""+keys[i]));
-//			Parcelable[] tw = {v[0], f};
-//			Log.d("DECODER", "(ColorDecoder) Adding key "+keys[i]);
-//			ids.put(keys[i], tw);
-//		}
-//		//Log.d("Parceling", ids.size()+"");
-//		firstNewCol = in.readByte();
-//		nextId = in.readByte();
-//		idArray = new ArrayList<Byte>(ids.keySet());
-//		Collections.sort(idArray);
-//	}
+	private ColorDecoder(Parcel in) {
+		this(in.readString());
+		//in.readTypedList(colors, HColor.CREATOR);
+		//in.readTypedList(images, Bitmap.CREATOR);
+		//in.readMap(ids, Map.class.getClassLoader());
+		//Object[] keys = in.readArray(Integer.class.getClassLoader());
+		int bysz = in.readInt();
+		byte[] keys = new byte[bysz]; 
+		in.readByteArray(keys);
+		Bundle b = in.readBundle();
+		for (int i=0; i<keys.length; i++) {
+			b.setClassLoader(HColor.class.getClassLoader());
+			Parcelable[] v = b.getParcelableArray(""+keys[i]);
+			//int[] colors = new int[100*100];
+			//java.util.Arrays.fill(colors, 0, 100*100, ((HColor)v[0]).getColor());
+			//Parcelable[] tw = {v[0], Bitmap.createBitmap(colors, 100, 100, Bitmap.Config.ARGB_8888)};
+			File inPath = new File(cacheDir, ((HColor)v[0]).toString());
+			FileInputStream inStream;
+			Bitmap f = null;
+			try {
+				inStream = new FileInputStream(inPath);
+				f = BitmapFactory.decodeStream(inStream);
+				inStream.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			//((Bitmap)entry.getValue()[1]).compress(Bitmap.CompressFormat.JPEG, 90, outStream);
+			//ids.put(keys[i], b.getParcelableArray(""+keys[i]));
+			Parcelable[] tw = {v[0], f};
+			Log.d("DECODER", "(ColorDecoder) Adding key "+keys[i]);
+			ids.put(keys[i], tw);
+		}
+		//Log.d("Parceling", ids.size()+"");
+		firstNewCol = in.readByte();
+		nextId = in.readByte();
+		idArray = new ArrayList<Byte>(ids.keySet());
+		Collections.sort(idArray);
+	}
 	
 	@Override
 	public int describeContents() {
@@ -454,13 +454,13 @@ public class ColorDecoder implements Parcelable {
 		out.writeByte(nextId);
 	}
 
-//	public static final Parcelable.Creator<ColorDecoder> CREATOR = new Parcelable.Creator<ColorDecoder>() {
-//		public ColorDecoder createFromParcel(Parcel in) {
-//			return new ColorDecoder(in);
-//		}
-//
-//		public ColorDecoder[] newArray(int size) {
-//			return new ColorDecoder[size];
-//		}
-//	};
+	public static final Parcelable.Creator<ColorDecoder> CREATOR = new Parcelable.Creator<ColorDecoder>() {
+		public ColorDecoder createFromParcel(Parcel in) {
+			return new ColorDecoder(in);
+		}
+
+		public ColorDecoder[] newArray(int size) {
+			return new ColorDecoder[size];
+		}
+	};
 }
