@@ -40,7 +40,9 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	boolean twisting;
 	boolean natural = true;
 	boolean spinning;
-	private final double originalAngle = 0;
+	
+	// TODO(bbrown): Probably remove this.
+	private static final double ORIGINAL_ANGLE = 0;
 	double currentAngle;
 	private int twistedLayer;
 	private int twistedMode;
@@ -54,9 +56,11 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	boolean mRunning = false;
 	Map<Integer, Integer> colorMap;
 
-	private final double[] eye = { 0.0, 0.0, -1.0 };
-	private final double[] eyeX = { 1.0, 0.0, 0.0 }; // (sideways)
-	private final double[] eyeY = new double[3]; // (vertical)
+	private static final double[] EYE = { 0.0, 0.0, -1.0 };
+	private static final double[] EYE_X = { 1.0, 0.0, 0.0 }; // (sideways)
+	// TODO(bbrown): Not sure why this isn't 0,1,0 or 0,-1,0
+	private static final double[] EYE_Y = new double[3]; // (vertical)
+	
 	private final double[] initialEye = new double[3];
 	private final double[] initialEyeX = new double[3];
 	private final double[] initialEyeY = new double[3];
@@ -75,154 +79,157 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	private final double[][] eyeArray = new double[3][];
 	private final double[][] eyeArrayX = new double[3][];
 	private final double[][] eyeArrayY = new double[3][];
-	private final int[][] eyeOrder = { { 1, 0, 0 }, { 0, 1, 0 }, { 1, 1, 0 },
-			{ 1, 1, 1 }, { 1, 0, 1 }, { 1, 0, 2 } };
-	private final int[][][][] blockArray = new int[3][][][];
-	private final int[][] blockMode = { { 0, 2, 2 }, { 2, 1, 2 }, { 2, 2, 2 },
-			{ 2, 2, 2 }, { 2, 2, 2 }, { 2, 2, 2 } };
-	private final int[][] drawOrder = { { 0, 1, 2 }, { 2, 1, 0 }, { 0, 2, 1 } };
+	
+	private static final int[][] EYE_ORDER = { { 1, 0, 0 }, { 0, 1, 0 }, { 1, 1, 0 },
+		{ 1, 1, 1 }, { 1, 0, 1 }, { 1, 0, 2	 } };
+	private static final int[][] BLACK_MODE = { { 0, 2, 2 }, { 2, 1, 2 }, { 2, 2, 2 },
+		{ 2, 2, 2 }, { 2, 2, 2 }, { 2, 2, 2 } };
+    private static final int[][] DRAW_ORDER = { { 0, 1, 2 }, { 2, 1, 0 }, { 0, 2, 1 } };
 
-	private static final int[][][] rotCos = {
-			{ { 1, 0, 0 }, { 0, 0, 0 }, { 0, 0, 1 } }, // U-D
-			{ { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } }, // F-B
-			{ { 0, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } } // L-R
+	private final int[][][][] blockArray = new int[3][][][];
+	
+	private static final int[][][] ROTATION_COS = {
+		{ { 1, 0, 0 }, { 0, 0, 0 }, { 0, 0, 1 } }, // U-D
+		{ { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } }, // F-B
+		{ { 0, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } } // L-R
 	};
-	private static final int[][][] rotSin = {
-			{ { 0, 0, 1 }, { 0, 0, 0 }, { -1, 0, 0 } }, // U-D
-			{ { 0, 1, 0 }, { -1, 0, 0 }, { 0, 0, 0 } }, // F-B
-			{ { 0, 0, 0 }, { 0, 0, 1 }, { 0, -1, 0 } } // L-R
+	private static final int[][][] ROTATION_SIN = {
+		{ { 0, 0, 1 }, { 0, 0, 0 }, { -1, 0, 0 } }, // U-D
+		{ { 0, 1, 0 }, { -1, 0, 0 }, { 0, 0, 0 } }, // F-B
+		{ { 0, 0, 0 }, { 0, 0, 1 }, { 0, -1, 0 } } // L-R
 	};
-	private static final int[][][] rotVec = {
-			{ { 0, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } }, // U-D
-			{ { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 1 } }, // F-B
-			{ { 1, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } } // L-R
+	private static final int[][][] ROTATION_VECTOR = {
+		{ { 0, 0, 0 }, { 0, 1, 0 }, { 0, 0, 0 } }, // U-D
+		{ { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 1 } }, // F-B
+		{ { 1, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } } // L-R
 	};
-	private static final int[] rotSign = { 1, -1, 1, -1, 1, -1 }; // U, D, F, B,
-																	// L, R
-	// cube dimensions in number of facelets (mincol, maxcol, minrow, maxrow)
-	// for compact cube
-	private static final int[][][] cubeBlocks = { { { 0, 3 }, { 0, 3 } }, // U
-			{ { 0, 3 }, { 0, 3 } }, // D
-			{ { 0, 3 }, { 0, 3 } }, // F
-			{ { 0, 3 }, { 0, 3 } }, // B
-			{ { 0, 3 }, { 0, 3 } }, // L
-			{ { 0, 3 }, { 0, 3 } } // R
+	
+	// Sign of the rotation direction per face.
+	// Up, Down, Front, Back, Left, Right
+	private static final int[] ROTATION_SIGN = { 1, -1, 1, -1, 1, -1 }; 
+	// Cube dimensions in number of facelets (mincol, maxcol, minrow, maxrow)
+	// for compact cube.
+	private static final int[][][] CUBE_BLOCKS = {
+		    { { 0, 3 }, { 0, 3 } }, // Up
+			{ { 0, 3 }, { 0, 3 } }, // Down
+			{ { 0, 3 }, { 0, 3 } }, // Front
+			{ { 0, 3 }, { 0, 3 } }, // Back
+			{ { 0, 3 }, { 0, 3 } }, // Left
+			{ { 0, 3 }, { 0, 3 } } // Right
 	};
-	// subcube dimensions
+	// Subcube dimensions
 	private final int[][][] topBlocks = new int[6][][];
 	private final int[][][] midBlocks = new int[6][][];
 	private final int[][][] botBlocks = new int[6][][];
-	// all possible subcube dimensions for top and bottom layers
-	private static final int[][][] topBlockTable = { { { 0, 0 }, { 0, 0 } },
-			{ { 0, 3 }, { 0, 3 } }, { { 0, 3 }, { 0, 1 } },
-			{ { 0, 1 }, { 0, 3 } }, { { 0, 3 }, { 2, 3 } },
-			{ { 2, 3 }, { 0, 3 } } };
-	// subcube dimmensions for middle layers
-	private static final int[][][] midBlockTable = { { { 0, 0 }, { 0, 0 } },
-			{ { 0, 3 }, { 1, 2 } }, { { 1, 2 }, { 0, 3 } } };
-	// indices to topBlockTable[] and botBlockTable[] for each twistedLayer
+	// All possible subcube dimensions for top and bottom layers.
+	private static final int[][][] TOP_BLOCK_TABLE = { 
+	    { { 0, 0 }, { 0, 0 } }, { { 0, 3 }, { 0, 3 } }, { { 0, 3 }, { 0, 1 } },
+	    { { 0, 1 }, { 0, 3 } }, { { 0, 3 }, { 2, 3 } }, { { 2, 3 }, { 0, 3 } } };
+	// Subcube dimensions for middle layers
+	private static final int[][][] MID_BLOCK_TABLE = { { { 0, 0 }, { 0, 0 } },
+		{ { 0, 3 }, { 1, 2 } }, { { 1, 2 }, { 0, 3 } } };
+	// Indices to topBlockTable[] and botBlockTable[] for each twistedLayer
 	// value
-	private static final int[][] topBlockFaceDim = {
-			// U D F B L R
-			{ 1, 0, 3, 3, 2, 3 }, // U
-			{ 0, 1, 5, 5, 4, 5 }, // D
-			{ 2, 3, 1, 0, 3, 2 }, // F
-			{ 4, 5, 0, 1, 5, 4 }, // B
-			{ 3, 2, 2, 4, 1, 0 }, // L
-			{ 5, 4, 4, 2, 0, 1 } // R
+	private static final int[][] TOP_BLOCK_FACE_DIMENSION = {
+		// Up Down Front Back Left Right
+		{ 1, 0, 3, 3, 2, 3 }, // Up
+		{ 0, 1, 5, 5, 4, 5 }, // Down
+		{ 2, 3, 1, 0, 3, 2 }, // Front
+		{ 4, 5, 0, 1, 5, 4 }, // Back
+		{ 3, 2, 2, 4, 1, 0 }, // Left
+		{ 5, 4, 4, 2, 0, 1 } // Right
 	};
-	private static final int[][] midBlockFaceDim = {
-			// U D F B L R
-			{ 0, 0, 2, 2, 1, 2 }, // U
-			{ 0, 0, 2, 2, 1, 2 }, // D
-			{ 1, 2, 0, 0, 2, 1 }, // F
-			{ 1, 2, 0, 0, 2, 1 }, // B
-			{ 2, 1, 1, 1, 0, 0 }, // L
-			{ 2, 1, 1, 1, 0, 0 } // R
+	private static final int[][] MID_BLOCK_FACE_DIMENSION = {
+		// Up Down Front Back Left Right
+		{ 0, 0, 2, 2, 1, 2 }, // Up
+		{ 0, 0, 2, 2, 1, 2 }, // Down
+		{ 1, 2, 0, 0, 2, 1 }, // Front
+		{ 1, 2, 0, 0, 2, 1 }, // Back
+		{ 2, 1, 1, 1, 0, 0 }, // Left
+		{ 2, 1, 1, 1, 0, 0 } // Right
 	};
-	private static final int[][] botBlockFaceDim = {
-			// U D F B L R
-			{ 0, 1, 5, 5, 4, 5 }, // U
-			{ 1, 0, 3, 3, 2, 3 }, // D
-			{ 4, 5, 0, 1, 5, 4 }, // F
-			{ 2, 3, 1, 0, 3, 2 }, // B
-			{ 5, 4, 4, 2, 0, 1 }, // L
-			{ 3, 2, 2, 4, 1, 0 } // R
+	private static final int[][] BOTTOM_BLOCK_FACE_DIMENSION = {
+	    // Up Down Front Back Left Right
+		{ 0, 1, 5, 5, 4, 5 }, // Up
+		{ 1, 0, 3, 3, 2, 3 }, // Down
+		{ 4, 5, 0, 1, 5, 4 }, // Front
+		{ 2, 3, 1, 0, 3, 2 }, // Back
+		{ 5, 4, 4, 2, 0, 1 }, // Left
+		{ 3, 2, 2, 4, 1, 0 } // Right
 	};
 
-	private static final double[][] faceNormals = { { 0.0, -1.0, 0.0 }, // U
-			{ 0.0, 1.0, 0.0 }, // D
-			{ 0.0, 0.0, -1.0 }, // F
-			{ 0.0, 0.0, 1.0 }, // B
-			{ -1.0, 0.0, 0.0 }, // L
-			{ 1.0, 0.0, 0.0 } // R
+	private static final double[][] FACE_NORMALS = {
+	    { 0.0, -1.0, 0.0 }, // Up
+		{ 0.0, 1.0, 0.0 }, // Down
+		{ 0.0, 0.0, -1.0 }, // Front
+		{ 0.0, 0.0, 1.0 }, // Bottom
+		{ -1.0, 0.0, 0.0 }, // Left
+		{ 1.0, 0.0, 0.0 } // Right
 	};
-	// vertex co-ordinates
-	private static final double[][] cornerCoords = { { -1.0, -1.0, -1.0 }, // UFL
-			{ 1.0, -1.0, -1.0 }, // UFR
-			{ 1.0, -1.0, 1.0 }, // UBR
-			{ -1.0, -1.0, 1.0 }, // UBL
-			{ -1.0, 1.0, -1.0 }, // DFL
-			{ 1.0, 1.0, -1.0 }, // DFR
-			{ 1.0, 1.0, 1.0 }, // DBR
-			{ -1.0, 1.0, 1.0 } // DBL
+	// Vertex co-ordinates
+	private static final double[][] CORNER_COORDINATES = {
+	    { -1.0, -1.0, -1.0 }, // UFL
+		{ 1.0, -1.0, -1.0 }, // UFR
+		{ 1.0, -1.0, 1.0 }, // UBR
+		{ -1.0, -1.0, 1.0 }, // UBL
+		{ -1.0, 1.0, -1.0 }, // DFL
+		{ 1.0, 1.0, -1.0 }, // DFR
+		{ 1.0, 1.0, 1.0 }, // DBR
+		{ -1.0, 1.0, 1.0 } // DBL
 	};
 	// vertices of each face
-	private static final int[][] faceCorners = { { 0, 1, 2, 3 }, // U: UFL UFR
-																	// UBR UBL
-			{ 4, 7, 6, 5 }, // D: DFL DBL DBR DFR
-			{ 0, 4, 5, 1 }, // F: UFL DFL DFR UFR
-			{ 2, 6, 7, 3 }, // B: UBR DBR DBL UBL
-			{ 0, 3, 7, 4 }, // L: UFL UBL DBL DFL
-			{ 1, 5, 6, 2 } // R: UFR DFR DBR UBR
+	private static final int[][] FACE_CORNERS = {
+	    { 0, 1, 2, 3 }, // U: UFL UFR UBR UBL
+		{ 4, 7, 6, 5 }, // D: DFL DBL DBR DFR
+		{ 0, 4, 5, 1 }, // F: UFL DFL DFR UFR
+		{ 2, 6, 7, 3 }, // B: UBR DBR DBL UBL
+		{ 0, 3, 7, 4 }, // L: UFL UBL DBL DFL
+		{ 1, 5, 6, 2 } // R: UFR DFR DBR UBR
 	};
 	// corresponding corners on the opposite face
-	private static final int[][] oppositeCorners = { { 0, 3, 2, 1 }, // U->D
-			{ 0, 3, 2, 1 }, // D->U
-			{ 3, 2, 1, 0 }, // F->B
-			{ 3, 2, 1, 0 }, // B->F
-			{ 0, 3, 2, 1 }, // L->R
-			{ 0, 3, 2, 1 }, // R->L
+	private static final int[][] OPPOSITE_CORNERS = {
+	    { 0, 3, 2, 1 }, // U->D
+		{ 0, 3, 2, 1 }, // D->U
+		{ 3, 2, 1, 0 }, // F->B
+		{ 3, 2, 1, 0 }, // B->F
+		{ 0, 3, 2, 1 }, // L->R
+		{ 0, 3, 2, 1 }, // R->L
 	};
-	private static final int[][] adjacentFaces = { { 2, 5, 3, 4 }, // U: F R B L
-			{ 4, 3, 5, 2 }, // D: L B R F
-			{ 4, 1, 5, 0 }, // F: L D R U
-			{ 5, 1, 4, 0 }, // B: R D L U
-			{ 0, 3, 1, 2 }, // L: U B D F
-			{ 2, 1, 3, 0 } // R: F D B U
+	private static final int[][] ADJACENT_FACES = {
+	    { 2, 5, 3, 4 }, // U: F R B L
+		{ 4, 3, 5, 2 }, // D: L B R F
+		{ 4, 1, 5, 0 }, // F: L D R U
+		{ 5, 1, 4, 0 }, // B: R D L U
+		{ 0, 3, 1, 2 }, // L: U B D F
+		{ 2, 1, 3, 0 } // R: F D B U
 	};
 
-	private static final int[] faceTwistDirs = { 1, 1, -1, -1, -1, -1 };
+	private static final int[] FACE_TWIST_DIRECTIONS = { 1, 1, -1, -1, -1, -1 };
 
 	// top facelet cycle
-	private static final int[] cycleOrder = { 0, 1, 2, 5, 8, 7, 6, 3 };
+	private static final int[] CYCLE_ORDER = { 0, 1, 2, 5, 8, 7, 6, 3 };
 	// side facelet cycle offsets
-	private static final int[] cycleFactors = { 1, 3, -1, -3, 1, 3, -1, -3 };
-	private static final int[] cycleOffsets = { 0, 2, 8, 6, 3, 1, 5, 7 };
+	private static final int[] CYCLE_FACTORS = { 1, 3, -1, -3, 1, 3, -1, -3 };
+	private static final int[] CYCLE_OFFSETS = { 0, 2, 8, 6, 3, 1, 5, 7 };
 	// indices for faces of layers
-	private static final int[][] cycleLayerSides = { { 3, 3, 3, 0 }, // U:
-																		// F=6-3k
-																		// R=6-3k
-																		// B=6-3k
-																		// L=k
-			{ 2, 1, 1, 1 }, // D: L=8-k B=2+3k R=2+3k F=2+3k
-			{ 3, 3, 0, 0 }, // F: L=6-3k D=6-3k R=k U=k
-			{ 2, 1, 1, 2 }, // B: R=8-k D=2+3k L=2+3k U=8-k
-			{ 3, 2, 0, 0 }, // L: U=6-3k B=8-k D=k F=k
-			{ 2, 2, 0, 1 } // R: F=8-k D=8-k B=k U=2+3k
+	private static final int[][] CYCLE_LAYER_SIDES = {
+	    { 3, 3, 3, 0 }, // U: F=6-3k R=6-3k B=6-3k L=k
+		{ 2, 1, 1, 1 }, // D: L=8-k B=2+3k R=2+3k F=2+3k
+		{ 3, 3, 0, 0 }, // F: L=6-3k D=6-3k R=k U=k
+		{ 2, 1, 1, 2 }, // B: R=8-k D=2+3k L=2+3k U=8-k
+		{ 3, 2, 0, 0 }, // L: U=6-3k B=8-k D=k F=k
+		{ 2, 2, 0, 1 } // R: F=8-k D=8-k B=k U=2+3k
 	};
 	// indices for sides of center layers
-	private static final int[][] cycleCenters = { { 7, 7, 7, 4 }, // E'(U):
-																	// F=7-3k
-																	// R=7-3k
-																	// B=7-3k
-																	// L=3+k
-			{ 6, 5, 5, 5 }, // E (D): L=5-k B=1+3k R=1+3k F=1+3k
-			{ 7, 7, 4, 4 }, // S (F): L=7-3k D=7-3k R=3+k U=3+k
-			{ 6, 5, 5, 6 }, // S'(B): R=5-k D=1+3k L=1+3k U=5-k
-			{ 7, 6, 4, 4 }, // M (L): U=7-3k B=8-k D=3+k F=3+k
-			{ 6, 6, 4, 5 } // M'(R): F=5-k D=5-k B=3+k U=1+3k
+	private static final int[][] CYCLE_CENTERS = {
+	    { 7, 7, 7, 4 }, // E'(U): F=7-3k R=7-3k B=7-3k L=3+k
+		{ 6, 5, 5, 5 }, // E (D): L=5-k B=1+3k R=1+3k F=1+3k
+		{ 7, 7, 4, 4 }, // S (F): L=7-3k D=7-3k R=3+k U=3+k
+		{ 6, 5, 5, 6 }, // S'(B): R=5-k D=1+3k L=1+3k U=5-k
+		{ 7, 6, 4, 4 }, // M (L): U=7-3k B=8-k D=3+k F=3+k
+		{ 6, 6, 4, 5 } // M'(R): F=5-k D=5-k B=3+k U=1+3k
 	};
+	
 	private final int[] twistBuffer = new int[12];
 	// polygon co-ordinates to fill (cube faces or facelets)
 	private final int[] fillX = new int[4];
@@ -232,9 +239,10 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	private final double[] coordsY = new double[8];
 	private final double[][] cooX = new double[6][4];
 	private final double[][] cooY = new double[6][4];
-	private static final double[][] border = { { 0.10, 0.10 }, { 0.90, 0.10 },
+	
+	private static final double[][] BORDER = { { 0.10, 0.10 }, { 0.90, 0.10 },
 			{ 0.90, 0.90 }, { 0.10, 0.90 } };
-	private static final int[][] factors = { { 0, 0 }, { 0, 1 }, { 1, 1 },
+	private static final int[][] FACTORS = { { 0, 0 }, { 0, 1 }, { 1, 1 },
 			{ 1, 0 } };
 	private final double[] tempNormal = new double[3];
 	/*private final double[] faceShiftX = new double[6];
@@ -246,30 +254,35 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	private final double[] dragDirsX = new double[18];
 	private final double[] dragDirsY = new double[18];
 	private static final int[][][] dragBlocks = {
-			{ { 0, 0 }, { 3, 0 }, { 3, 1 }, { 0, 1 } },
-			{ { 3, 0 }, { 3, 3 }, { 2, 3 }, { 2, 0 } },
-			{ { 3, 3 }, { 0, 3 }, { 0, 2 }, { 3, 2 } },
-			{ { 0, 3 }, { 0, 0 }, { 1, 0 }, { 1, 3 } },
-			// center slices
-			{ { 0, 1 }, { 3, 1 }, { 3, 2 }, { 0, 2 } },
-			{ { 2, 0 }, { 2, 3 }, { 1, 3 }, { 1, 0 } } };
-	private static final int[][] areaDirs = { { 1, 0 }, { 0, 1 }, { -1, 0 },
-			{ 0, -1 }, { 1, 0 }, { 0, 1 } };
-	private static final int[][] twistDirs = { { 1, 1, 1, 1, 1, -1 }, // U
-			{ 1, 1, 1, 1, 1, -1 }, // D
-			{ 1, -1, 1, -1, 1, 1 }, // F
-			{ 1, -1, 1, -1, -1, 1 }, // B
-			{ -1, 1, -1, 1, -1, -1 }, // L
-			{ 1, -1, 1, -1, 1, 1 } // R
+		{ { 0, 0 }, { 3, 0 }, { 3, 1 }, { 0, 1 } },
+		{ { 3, 0 }, { 3, 3 }, { 2, 3 }, { 2, 0 } },
+		{ { 3, 3 }, { 0, 3 }, { 0, 2 }, { 3, 2 } },
+		{ { 0, 3 }, { 0, 0 }, { 1, 0 }, { 1, 3 } },
+		// center slices
+		{ { 0, 1 }, { 3, 1 }, { 3, 2 }, { 0, 2 } },
+		{ { 2, 0 }, { 2, 3 }, { 1, 3 }, { 1, 0 } } };
+	private static final int[][] areaDirs = {
+	    { 1, 0 }, { 0, 1 }, { -1, 0 },
+		{ 0, -1 }, { 1, 0 }, { 0, 1 } };
+	private static final int[][] twistDirs = {
+	    { 1, 1, 1, 1, 1, -1 }, // U
+		{ 1, 1, 1, 1, 1, -1 }, // D
+		{ 1, -1, 1, -1, 1, 1 }, // F
+		{ 1, -1, 1, -1, -1, 1 }, // B
+		{ -1, 1, -1, 1, -1, -1 }, // L
+		{ 1, -1, 1, -1, 1, 1 } // R
 	};
-	private int[] dragLayers = new int[18]; // which layers belongs to
-											// dragCorners
-	private int[] dragModes = new int[18]; // which layer modes dragCorners
+	
+	// which layers belongs to dragCorners
+	private int[] dragLayers = new int[18];
+	// which layer modes dragCorners
+	private int[] dragModes = new int[18]; 
 	// current drag directions
 	private double dragX;
 	private double dragY;
 	private int[][] move;
 	private int[][] demoMove;*/
+	
 	private int[] curMove;
 	
 	private Object drawLock = new Object();
@@ -279,7 +292,6 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		surfaceHolder = getHolder();
 		surfaceHolder.addCallback(this);
 		setFocusable(true); // make sure we get key events
-
 	}
 	
 	public void init(RubikCube.CubeState state, Map<Integer, Integer> map) {
@@ -345,24 +357,24 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			case 'd':
 				angle = -angle;
 			case 'u':
-				vRotY(eye, angle);
-				vRotY(eyeX, angle);
+				vRotY(EYE, angle);
+				vRotY(EYE_X, angle);
 				break;
 			case 'f':
 				angle = -angle;
 			case 'b':
-				vRotZ(eye, angle);
-				vRotZ(eyeX, angle);
+				vRotZ(EYE, angle);
+				vRotZ(EYE_X, angle);
 				break;
 			case 'l':
 				angle = -angle;
 			case 'r':
-				vRotX(eye, angle);
-				vRotX(eyeX, angle);
+				vRotX(EYE, angle);
+				vRotX(EYE_X, angle);
 				break;
 			}
 		}
-		vNorm(vMul(eyeY, eye, eyeX)); // fix eyeY
+		vNorm(vMul(EYE_Y, EYE, EYE_X)); // fix eyeY
 		speed = 40;
 		doubleSpeed = speed * 3 / 2;
 		persp = 2;
@@ -373,12 +385,11 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			for (int j = 0; j < 9; j++)
 				initialCube[i][j] = cube[i][j];
 		for (int i = 0; i < 3; i++) {
-			initialEye[i] = eye[i];
-			initialEyeX[i] = eyeX[i];
-			initialEyeY[i] = eyeY[i];
+			initialEye[i] = EYE[i];
+			initialEyeX[i] = EYE_X[i];
+			initialEyeY[i] = EYE_Y[i];
 		}
 		//move = new int[0][0];
-
 	}
 	
 	public void move(int[] move, int dir, boolean one, boolean anim) {
@@ -489,48 +500,48 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		// synchronized (animThread) {
 		// dragAreas = 0;
 		if (naturalForDraw) // compact cube
-			fixBlock(c, eye, eyeX, eyeY, cubeBlocks, 3, drawCube); // draw cube and fill
+			fixBlock(c, EYE, EYE_X, EYE_Y, CUBE_BLOCKS, 3, drawCube); // draw cube and fill
 															// drag areas
 		else { // in twisted state
 				// compute top observer
-			double cosA = Math.cos(originalAngle + currentAngleForDraw);
-			double sinA = Math.sin(originalAngle + currentAngleForDraw)
-					* rotSign[twistedLayerForDraw];
+			double cosA = Math.cos(ORIGINAL_ANGLE + currentAngleForDraw);
+			double sinA = Math.sin(ORIGINAL_ANGLE + currentAngleForDraw)
+					* ROTATION_SIGN[twistedLayerForDraw];
 			for (int i = 0; i < 3; i++) {
 				tempEye[i] = 0;
 				tempEyeX[i] = 0;
 				for (int j = 0; j < 3; j++) {
 					int axis = twistedLayerForDraw / 2;
-					tempEye[i] += eye[j]
-							* (rotVec[axis][i][j] + rotCos[axis][i][j] * cosA + rotSin[axis][i][j]
+					tempEye[i] += EYE[j]
+							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosA + ROTATION_SIN[axis][i][j]
 									* sinA);
-					tempEyeX[i] += eyeX[j]
-							* (rotVec[axis][i][j] + rotCos[axis][i][j] * cosA + rotSin[axis][i][j]
+					tempEyeX[i] += EYE_X[j]
+							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosA + ROTATION_SIN[axis][i][j]
 									* sinA);
 				}
 			}
 			vMul(tempEyeY, tempEye, tempEyeX);
 			// compute bottom anti-observer
-			double cosB = Math.cos(originalAngle - currentAngleForDraw);
-			double sinB = Math.sin(originalAngle - currentAngleForDraw)
-					* rotSign[twistedLayerForDraw];
+			double cosB = Math.cos(ORIGINAL_ANGLE - currentAngleForDraw);
+			double sinB = Math.sin(ORIGINAL_ANGLE - currentAngleForDraw)
+					* ROTATION_SIGN[twistedLayerForDraw];
 			for (int i = 0; i < 3; i++) {
 				tempEye2[i] = 0;
 				tempEyeX2[i] = 0;
 				for (int j = 0; j < 3; j++) {
 					int axis = twistedLayerForDraw / 2;
-					tempEye2[i] += eye[j]
-							* (rotVec[axis][i][j] + rotCos[axis][i][j] * cosB + rotSin[axis][i][j]
+					tempEye2[i] += EYE[j]
+							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosB + ROTATION_SIN[axis][i][j]
 									* sinB);
-					tempEyeX2[i] += eyeX[j]
-							* (rotVec[axis][i][j] + rotCos[axis][i][j] * cosB + rotSin[axis][i][j]
+					tempEyeX2[i] += EYE_X[j]
+							* (ROTATION_VECTOR[axis][i][j] + ROTATION_COS[axis][i][j] * cosB + ROTATION_SIN[axis][i][j]
 									* sinB);
 				}
 			}
 			vMul(tempEyeY2, tempEye2, tempEyeX2);
-			eyeArray[0] = eye;
-			eyeArrayX[0] = eyeX;
-			eyeArrayY[0] = eyeY;
+			eyeArray[0] = EYE;
+			eyeArrayX[0] = EYE_X;
+			eyeArrayY[0] = EYE_Y;
 			eyeArray[1] = tempEye;
 			eyeArrayX[1] = tempEyeX;
 			eyeArrayY[1] = tempEyeY;
@@ -539,14 +550,14 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			eyeArrayY[2] = tempEyeY2;
 			
 			// perspective corrections
-			vSub(vScale(vCopy(perspEye, eye), 5.0 + persp),
-					vScale(vCopy(perspNormal, faceNormals[twistedLayerForDraw]),
+			vSub(vScale(vCopy(perspEye, EYE), 5.0 + persp),
+					vScale(vCopy(perspNormal, FACE_NORMALS[twistedLayerForDraw]),
 							1.0 / 3.0));
-			vSub(vScale(vCopy(perspEyeI, eye), 5.0 + persp),
-					vScale(vCopy(perspNormal, faceNormals[twistedLayerForDraw ^ 1]),
+			vSub(vScale(vCopy(perspEyeI, EYE), 5.0 + persp),
+					vScale(vCopy(perspNormal, FACE_NORMALS[twistedLayerForDraw ^ 1]),
 							1.0 / 3.0));
-			double topProd = vProd(perspEye, faceNormals[twistedLayerForDraw]);
-			double botProd = vProd(perspEyeI, faceNormals[twistedLayerForDraw ^ 1]);
+			double topProd = vProd(perspEye, FACE_NORMALS[twistedLayerForDraw]);
+			double botProd = vProd(perspEyeI, FACE_NORMALS[twistedLayerForDraw ^ 1]);
 			int orderMode;
 			if (topProd < 0 && botProd > 0) // top facing away
 				orderMode = 0;
@@ -557,25 +568,25 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 				// both top and bottom layer facing away: draw them first
 				orderMode = 2;
 			fixBlock(c,
-					eyeArray[eyeOrder[twistedModeForDraw][drawOrder[orderMode][0]]],
-					eyeArrayX[eyeOrder[twistedModeForDraw][drawOrder[orderMode][0]]],
-					eyeArrayY[eyeOrder[twistedModeForDraw][drawOrder[orderMode][0]]],
-					blockArray[drawOrder[orderMode][0]],
-					blockMode[twistedModeForDraw][drawOrder[orderMode][0]],
+					eyeArray[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][0]]],
+					eyeArrayX[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][0]]],
+					eyeArrayY[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][0]]],
+					blockArray[DRAW_ORDER[orderMode][0]],
+					BLACK_MODE[twistedModeForDraw][DRAW_ORDER[orderMode][0]],
 					drawCube);
 			fixBlock(c,
-					eyeArray[eyeOrder[twistedModeForDraw][drawOrder[orderMode][1]]],
-					eyeArrayX[eyeOrder[twistedModeForDraw][drawOrder[orderMode][1]]],
-					eyeArrayY[eyeOrder[twistedModeForDraw][drawOrder[orderMode][1]]],
-					blockArray[drawOrder[orderMode][1]],
-					blockMode[twistedModeForDraw][drawOrder[orderMode][1]],
+					eyeArray[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][1]]],
+					eyeArrayX[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][1]]],
+					eyeArrayY[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][1]]],
+					blockArray[DRAW_ORDER[orderMode][1]],
+					BLACK_MODE[twistedModeForDraw][DRAW_ORDER[orderMode][1]],
 					drawCube);
 			fixBlock(c,
-					eyeArray[eyeOrder[twistedModeForDraw][drawOrder[orderMode][2]]],
-					eyeArrayX[eyeOrder[twistedModeForDraw][drawOrder[orderMode][2]]],
-					eyeArrayY[eyeOrder[twistedModeForDraw][drawOrder[orderMode][2]]],
-					blockArray[drawOrder[orderMode][2]],
-					blockMode[twistedModeForDraw][drawOrder[orderMode][2]],
+					eyeArray[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][2]]],
+					eyeArrayX[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][2]]],
+					eyeArrayY[EYE_ORDER[twistedModeForDraw][DRAW_ORDER[orderMode][2]]],
+					blockArray[DRAW_ORDER[orderMode][2]],
+					BLACK_MODE[twistedModeForDraw][DRAW_ORDER[orderMode][2]],
 					drawCube);
 		}
 		// if (!pushed && !animating) // no button should be deceased
@@ -741,9 +752,9 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			twisting = false;
 			natural = true;
 			spinning = true;
-			//originalAngle = 0;
+			//ORIGINAL_ANGLE = 0;
 		}
-		if (faceTwistDirs[layer] > 0)
+		if (FACE_TWIST_DIRECTIONS[layer] > 0)
 			clockwise = !clockwise;
 		if (animated) {
 			double phit = Math.PI / 2; // target for currentAngle (default pi/2)
@@ -791,9 +802,9 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 
 	private void splitCube(int layer) {
 		for (int i = 0; i < 6; i++) { // for all faces
-			topBlocks[i] = topBlockTable[topBlockFaceDim[layer][i]];
-			botBlocks[i] = topBlockTable[botBlockFaceDim[layer][i]];
-			midBlocks[i] = midBlockTable[midBlockFaceDim[layer][i]];
+			topBlocks[i] = TOP_BLOCK_TABLE[TOP_BLOCK_FACE_DIMENSION[layer][i]];
+			botBlocks[i] = TOP_BLOCK_TABLE[BOTTOM_BLOCK_FACE_DIMENSION[layer][i]];
+			midBlocks[i] = MID_BLOCK_TABLE[MID_BLOCK_FACE_DIMENSION[layer][i]];
 		}
 		natural = false;
 	}
@@ -848,18 +859,18 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			// rotate top facelets
 			for (int i = 0; i < 8; i++)
 				// to buffer
-				twistBuffer[(i + num * 2) % 8] = cube[layer][cycleOrder[i]];
+				twistBuffer[(i + num * 2) % 8] = cube[layer][CYCLE_ORDER[i]];
 			for (int i = 0; i < 8; i++)
 				// to cube
-				cube[layer][cycleOrder[i]] = twistBuffer[i];
+				cube[layer][CYCLE_ORDER[i]] = twistBuffer[i];
 		}
 		// rotate side facelets
 		int k = num * 3;
 		for (int i = 0; i < 4; i++) { // to buffer
-			int n = adjacentFaces[layer][i];
-			int c = middle ? cycleCenters[layer][i] : cycleLayerSides[layer][i];
-			int factor = cycleFactors[c];
-			int offset = cycleOffsets[c];
+			int n = ADJACENT_FACES[layer][i];
+			int c = middle ? CYCLE_CENTERS[layer][i] : CYCLE_LAYER_SIDES[layer][i];
+			int factor = CYCLE_FACTORS[c];
+			int offset = CYCLE_OFFSETS[c];
 			for (int j = 0; j < 3; j++) {
 				twistBuffer[k % 12] = cube[n][j * factor + offset];
 				k++;
@@ -867,10 +878,10 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		}
 		k = 0; // MS VM JIT bug if placed into the loop init
 		for (int i = 0; i < 4; i++) { // to cube
-			int n = adjacentFaces[layer][i];
-			int c = middle ? cycleCenters[layer][i] : cycleLayerSides[layer][i];
-			int factor = cycleFactors[c];
-			int offset = cycleOffsets[c];
+			int n = ADJACENT_FACES[layer][i];
+			int c = middle ? CYCLE_CENTERS[layer][i] : CYCLE_LAYER_SIDES[layer][i];
+			int factor = CYCLE_FACTORS[c];
+			int offset = CYCLE_OFFSETS[c];
 			int j = 0; // MS VM JIT bug if for is used
 			while (j < 3) {
 				cube[n][j * factor + offset] = twistBuffer[k];
@@ -886,9 +897,9 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		for (int i = 0; i < 8; i++) {
 			double min = mCanvasWidth < mCanvasHeight ? mCanvasWidth
 					: mCanvasHeight - progressHeight;
-			double x = min / 3.7 * vProd(cornerCoords[i], eyeX) * scale;
-			double y = min / 3.7 * vProd(cornerCoords[i], eyeY) * scale;
-			double z = min / (5.0 + persp) * vProd(cornerCoords[i], eye)
+			double x = min / 3.7 * vProd(CORNER_COORDINATES[i], eyeX) * scale;
+			double y = min / 3.7 * vProd(CORNER_COORDINATES[i], eyeY) * scale;
+			double z = min / (5.0 + persp) * vProd(CORNER_COORDINATES[i], eye)
 					* scale;
 			x = x / (1 - z / min); // perspective transformation
 			y = y / (1 - z / min); // perspective transformation
@@ -904,17 +915,17 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		// setup corner co-ordinates for all faces
 		for (int i = 0; i < 6; i++) { // all faces
 			for (int j = 0; j < 4; j++) { // all face corners
-				cooX[i][j] = coordsX[faceCorners[i][j]];
-				cooY[i][j] = coordsY[faceCorners[i][j]];
+				cooX[i][j] = coordsX[FACE_CORNERS[i][j]];
+				cooY[i][j] = coordsY[FACE_CORNERS[i][j]];
 			}
 		}
 		if (hint) { // draw hint hiden facelets
 			for (int i = 0; i < 6; i++) { // all faces
-				vSub(vScale(vCopy(perspEye, eye), 5.0 + persp), faceNormals[i]); // perspective
+				vSub(vScale(vCopy(perspEye, eye), 5.0 + persp), FACE_NORMALS[i]); // perspective
 																					// correction
-				if (vProd(perspEye, faceNormals[i]) < 0) { // draw only hiden
+				if (vProd(perspEye, FACE_NORMALS[i]) < 0) { // draw only hiden
 															// faces
-					vScale(vCopy(tempNormal, faceNormals[i]), faceShift);
+					vScale(vCopy(tempNormal, FACE_NORMALS[i]), faceShift);
 					double min = mCanvasWidth < mCanvasHeight ? mCanvasWidth
 							: mCanvasHeight - progressHeight;
 					double x = min / 3.7 * vProd(tempNormal, eyeX);
@@ -930,7 +941,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 							for (int o = 0, q = blocks[i][0][0]; o < sideW; o++, q++) {
 								for (int j = 0; j < 4; j++) {
 									getCorners(i, j, fillX, fillY, q
-											+ border[j][0], p + border[j][1],
+											+ BORDER[j][0], p + BORDER[j][1],
 											mirrored);
 									fillX[j] += mirrored ? -x : x;
 									fillY[j] -= y;
@@ -961,8 +972,8 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			if (sideW > 0 && sideH > 0) {
 				for (int j = 0; j < 4; j++)
 					// corner co-ordinates
-					getCorners(i, j, fillX, fillY, blocks[i][0][factors[j][0]],
-							blocks[i][1][factors[j][1]], mirrored);
+					getCorners(i, j, fillX, fillY, blocks[i][0][FACTORS[j][0]],
+							blocks[i][1][FACTORS[j][1]], mirrored);
 				// int color;
 				// if (sideW == 3 && sideH == 3)
 				// graphics.setColor(bgColor2);
@@ -978,7 +989,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			int sideH = blocks[i][1][1] - blocks[i][1][0];
 			if (sideW <= 0 || sideH <= 0) { // this face is inner and only black
 				for (int j = 0; j < 4; j++) { // for all corners
-					int k = oppositeCorners[i][j];
+					int k = OPPOSITE_CORNERS[i][j];
 					fillX[j] = (int) (cooX[i][j] + (cooX[i ^ 1][k] - cooX[i][j]) * 2.0 / 3.0);
 					fillY[j] = (int) (cooY[i][j] + (cooY[i ^ 1][k] - cooY[i][j]) * 2.0 / 3.0);
 					if (mirrored)
@@ -992,8 +1003,8 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 				// visibility!)
 				for (int j = 0; j < 4; j++)
 					// corner co-ordinates
-					getCorners(i, j, fillX, fillY, blocks[i][0][factors[j][0]],
-							blocks[i][1][factors[j][1]], mirrored);
+					getCorners(i, j, fillX, fillY, blocks[i][0][FACTORS[j][0]],
+							blocks[i][1][FACTORS[j][1]], mirrored);
 				// graphics.setColor(Color.black);
 				// graphics.fillPolygon(fillX, fillY, 4);
 				drawPolygon(c, 0, fillX, fillY, 4, true);
@@ -1001,9 +1012,9 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		}
 		// draw all visible faces and get dragging regions
 		for (int i = 0; i < 6; i++) { // all faces
-			vSub(vScale(vCopy(perspEye, eye), 5.0 + persp), faceNormals[i]); // perspective
+			vSub(vScale(vCopy(perspEye, eye), 5.0 + persp), FACE_NORMALS[i]); // perspective
 																				// correction
-			if (vProd(perspEye, faceNormals[i]) > 0) { // draw only faces
+			if (vProd(perspEye, FACE_NORMALS[i]) > 0) { // draw only faces
 														// towards us
 				int sideW = blocks[i][0][1] - blocks[i][0][0];
 				int sideH = blocks[i][1][1] - blocks[i][1][0];
@@ -1013,7 +1024,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 						for (int o = 0, q = blocks[i][0][0]; o < sideW; o++, q++) {
 							for (int j = 0; j < 4; j++)
 								getCorners(i, j, fillX, fillY,
-										q + border[j][0], p + border[j][1],
+										q + BORDER[j][0], p + BORDER[j][1],
 										mirrored);
 							drawPolygon(c,
 									darker(colorMap.get(drawCube[i][p * 3 + q])),
