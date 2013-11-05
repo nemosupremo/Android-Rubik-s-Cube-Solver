@@ -19,6 +19,9 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+/**
+ * ColorDecoder is NOT thread safe. Working on it.
+ */
 public class ColorDecoder implements Parcelable {
 	//private List<HColor> colors;
 	//private List<Bitmap> images;
@@ -46,13 +49,14 @@ public class ColorDecoder implements Parcelable {
 		return idArray;
 	}
 	
-	public void free() {
+	private void free() {
 		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
+			Log.d("DECODER", "(free) Recycling bitmap " + entry.getKey());
 			((Bitmap)entry.getValue()[1]).recycle();
 		}
 	}
 	
-	protected static int sobel(Bitmap image, int x, int y) {
+	private static int sobel(Bitmap image, int x, int y) {
 		int r, g, b, color, horizSobel, vertSobel;
 		int[][] sob = new int[3][3];
 		for (int i = -1; i <= 1; i++) {
@@ -74,47 +78,44 @@ public class ColorDecoder implements Parcelable {
 	}
 	
 	//protected static native int[][] nativeSobelData(Bitmap bitmap);
+//	
+//	protected static int[][] sobelData(Bitmap image) {
+//		int r,g,b,color,horizSobel,vertSobel;
+//		int imWidth = image.getWidth();
+//		int imHeight = image.getHeight();
+//		//Log.d("DAT", String.format("Width - %d Height %d", imWidth, imHeight));
+//		int[][] out = new int[imWidth][imHeight];  
+//		int[][] sob = new int[3][3];
+//		for (int x=1; x<imWidth-1; x++) {
+//			for (int y=1; y<imHeight-1; y++) {
+//				for (int i=-1; i<=1; i++) {
+//					for (int j=-1; j<=1; j++) {
+//						color = image.getPixel(x+i,y+j);
+//						r = (color >> 16) & 0xFF;
+//						g = (color >> 8) & 0xFF;
+//						b = color & 0xFF;
+//						sob[i+1][j+1] = (int) (r * 299.0/1000 + g * 587.0/1000 + b * 114.0/1000);
+//					}
+//				}
+//				horizSobel = -(sob[1-1][1-1]) + 
+//			      (sob[1+1][1-1]) - 
+//			      (sob[1-1][1]) - (sob[1-1][1]) +
+//			      (sob[1+1][1]) + (sob[1+1][1]) -
+//			      (sob[1-1][1+1]) + 
+//			      (sob[1+1][1+1]);
+//	            vertSobel =  -(sob[1-1][1-1]) - 
+//	            (sob[1][1-1]) - sob[1][1-1] - 
+//	            (sob[1+1][1-1]) +
+//	            (sob[1-1][1+1]) + 
+//	            (sob[1][1+1]) + (sob[1][1+1]) + 
+//	            (sob[1+1][1+1]);
+//	           out[x][y] = Math.min(255, Math.max(0, (horizSobel+vertSobel)/2));
+//			}
+//		}
+//		return out;
+//	}
 	
-	protected static int[][] sobelData(Bitmap image) {
-		int r,g,b,color,horizSobel,vertSobel;
-		int imWidth = image.getWidth();
-		int imHeight = image.getHeight();
-		//Log.d("DAT", String.format("Width - %d Height %d", imWidth, imHeight));
-		int[][] out = new int[imWidth][imHeight];  
-		int[][] sob = new int[3][3];
-		for (int x=1; x<imWidth-1; x++) {
-			for (int y=1; y<imHeight-1; y++) {
-				for (int i=-1; i<=1; i++) {
-					for (int j=-1; j<=1; j++) {
-						color = image.getPixel(x+i,y+j);
-						r = (color >> 16) & 0xFF;
-						g = (color >> 8) & 0xFF;
-						b = color & 0xFF;
-						sob[i+1][j+1] = (int) (r * 299.0/1000 + g * 587.0/1000 + b * 114.0/1000);
-					}
-				}
-				horizSobel = -(sob[1-1][1-1]) + 
-			      (sob[1+1][1-1]) - 
-			      (sob[1-1][1]) - (sob[1-1][1]) +
-			      (sob[1+1][1]) + (sob[1+1][1]) -
-			      (sob[1-1][1+1]) + 
-			      (sob[1+1][1+1]);
-	            vertSobel =  -(sob[1-1][1-1]) - 
-	            (sob[1][1-1]) - sob[1][1-1] - 
-	            (sob[1+1][1-1]) +
-	            (sob[1-1][1+1]) + 
-	            (sob[1][1+1]) + (sob[1][1+1]) + 
-	            (sob[1+1][1+1]);
-	           out[x][y] = Math.min(255, Math.max(0, (horizSobel+vertSobel)/2));
-			}
-		}
-		
-		
-		return out;
-		
-	}
-	
-	protected HColor avg(List<HColor> L) {
+	private HColor avg(List<HColor> L) {
 		double h,l,s;
 		int r,g,b;
 		h=l=s=0;
@@ -137,14 +138,15 @@ public class ColorDecoder implements Parcelable {
 	}
 	
 	public Bitmap getBitmap(byte key) {
-		//Log.d("DECODER", "Trying to access key "+key);
+		Log.d("DECODER", "Trying to access key "+key);
+		Log.d("DECODER", "ids size = "+ids.size());
 		return (Bitmap)ids.get(key)[1];
 	}
 	
 	public void removeColor(byte key) {
 		//colors.remove(position);
 		//images.remove(position);
-		//Log.d("DECODER", "Removing key "+key);
+		Log.d("DECODER", "Removing key "+key);
 		HColor v = (HColor) ids.get(key)[0];
 		try {
 			File outPath = new File(cacheDir, v.toString());
@@ -163,9 +165,9 @@ public class ColorDecoder implements Parcelable {
 		return ids.size();
 	}
 	
-	public Set<Map.Entry<Byte, Parcelable[]>> entrySet() {
-		return ids.entrySet();
-	}
+//	public Set<Map.Entry<Byte, Parcelable[]>> entrySet() {
+//		return ids.entrySet();
+//	}
 	
 	public boolean hasId(byte id) {
 		return ids.containsKey(id);
@@ -175,7 +177,7 @@ public class ColorDecoder implements Parcelable {
 		return new HashSet<Byte>(ids.keySet());
 	}
 	
-	public void deleteImages() 
+	private void deleteImages() 
 	{
 		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
 			HColor v = (HColor) entry.getValue()[0];
@@ -206,6 +208,7 @@ public class ColorDecoder implements Parcelable {
 	public void clear() {
 		//colors.clear();
 		//images.clear();
+		Log.d("DECODER", "(Clear) Clearing ids");
 		free();
 		deleteImages();
 		ids.clear();
@@ -348,6 +351,7 @@ public class ColorDecoder implements Parcelable {
 			        imref = Bitmap.createBitmap(imref, 0, 0,
 			        		imref.getWidth(), imref.getHeight(), matrix, true);
 				}
+				Log.d("DECODER", "(decode) Adding key "+nextId);
 				ids.put(nextId, new Parcelable[]{cubeVals.get(i), imref});
 				//images.add(Bitmap.createBitmap(im, x1, y1, sideLength / 3, sideLength / 3));
 				//ret.add(colors.size()-1);
@@ -365,44 +369,45 @@ public class ColorDecoder implements Parcelable {
 		
 	}
 
-	private ColorDecoder(Parcel in) {
-		this(in.readString());
-		//in.readTypedList(colors, HColor.CREATOR);
-		//in.readTypedList(images, Bitmap.CREATOR);
-		//in.readMap(ids, Map.class.getClassLoader());
-		//Object[] keys = in.readArray(Integer.class.getClassLoader());
-		int bysz = in.readInt();
-		byte[] keys = new byte[bysz]; 
-		in.readByteArray(keys);
-		Bundle b = in.readBundle();
-		for (int i=0; i<keys.length; i++) {
-			b.setClassLoader(HColor.class.getClassLoader());
-			Parcelable[] v = b.getParcelableArray(""+keys[i]);
-			//int[] colors = new int[100*100];
-			//java.util.Arrays.fill(colors, 0, 100*100, ((HColor)v[0]).getColor());
-			//Parcelable[] tw = {v[0], Bitmap.createBitmap(colors, 100, 100, Bitmap.Config.ARGB_8888)};
-			File inPath = new File(cacheDir, ((HColor)v[0]).toString());
-			FileInputStream inStream;
-			Bitmap f = null;
-			try {
-				inStream = new FileInputStream(inPath);
-				f = BitmapFactory.decodeStream(inStream);
-				inStream.close();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-			
-			//((Bitmap)entry.getValue()[1]).compress(Bitmap.CompressFormat.JPEG, 90, outStream);
-			//ids.put(keys[i], b.getParcelableArray(""+keys[i]));
-			Parcelable[] tw = {v[0], f};
-			ids.put(keys[i], tw);
-		}
-		//Log.d("Parceling", ids.size()+"");
-		firstNewCol = in.readByte();
-		nextId = in.readByte();
-		idArray = new ArrayList<Byte>(ids.keySet());
-		Collections.sort(idArray);
-	}
+//	private ColorDecoder(Parcel in) {
+//		this(in.readString());
+//		//in.readTypedList(colors, HColor.CREATOR);
+//		//in.readTypedList(images, Bitmap.CREATOR);
+//		//in.readMap(ids, Map.class.getClassLoader());
+//		//Object[] keys = in.readArray(Integer.class.getClassLoader());
+//		int bysz = in.readInt();
+//		byte[] keys = new byte[bysz]; 
+//		in.readByteArray(keys);
+//		Bundle b = in.readBundle();
+//		for (int i=0; i<keys.length; i++) {
+//			b.setClassLoader(HColor.class.getClassLoader());
+//			Parcelable[] v = b.getParcelableArray(""+keys[i]);
+//			//int[] colors = new int[100*100];
+//			//java.util.Arrays.fill(colors, 0, 100*100, ((HColor)v[0]).getColor());
+//			//Parcelable[] tw = {v[0], Bitmap.createBitmap(colors, 100, 100, Bitmap.Config.ARGB_8888)};
+//			File inPath = new File(cacheDir, ((HColor)v[0]).toString());
+//			FileInputStream inStream;
+//			Bitmap f = null;
+//			try {
+//				inStream = new FileInputStream(inPath);
+//				f = BitmapFactory.decodeStream(inStream);
+//				inStream.close();
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
+//			
+//			//((Bitmap)entry.getValue()[1]).compress(Bitmap.CompressFormat.JPEG, 90, outStream);
+//			//ids.put(keys[i], b.getParcelableArray(""+keys[i]));
+//			Parcelable[] tw = {v[0], f};
+//			Log.d("DECODER", "(ColorDecoder) Adding key "+keys[i]);
+//			ids.put(keys[i], tw);
+//		}
+//		//Log.d("Parceling", ids.size()+"");
+//		firstNewCol = in.readByte();
+//		nextId = in.readByte();
+//		idArray = new ArrayList<Byte>(ids.keySet());
+//		Collections.sort(idArray);
+//	}
 	
 	@Override
 	public int describeContents() {
@@ -449,13 +454,13 @@ public class ColorDecoder implements Parcelable {
 		out.writeByte(nextId);
 	}
 
-	public static final Parcelable.Creator<ColorDecoder> CREATOR = new Parcelable.Creator<ColorDecoder>() {
-		public ColorDecoder createFromParcel(Parcel in) {
-			return new ColorDecoder(in);
-		}
-
-		public ColorDecoder[] newArray(int size) {
-			return new ColorDecoder[size];
-		}
-	};
+//	public static final Parcelable.Creator<ColorDecoder> CREATOR = new Parcelable.Creator<ColorDecoder>() {
+//		public ColorDecoder createFromParcel(Parcel in) {
+//			return new ColorDecoder(in);
+//		}
+//
+//		public ColorDecoder[] newArray(int size) {
+//			return new ColorDecoder[size];
+//		}
+//	};
 }
