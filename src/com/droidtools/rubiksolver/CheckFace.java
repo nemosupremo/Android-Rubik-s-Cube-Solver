@@ -348,7 +348,7 @@ public class CheckFace extends Activity {
 						groupAdapter.setData(colorFix.get(colorPage));
 						ungroupAdapter.notifyDataSetChanged();
 						groupAdapter.notifyDataSetChanged();
-						similarText.setText(String.format("Face %d/6", colorPage+1));
+						similarText.setText(String.format(getResources().getString(R.string.colorPageFormat), colorPage+1));
 						if (colorPage == 5)
 							nextSimilarButton.setText("Done");
 					}
