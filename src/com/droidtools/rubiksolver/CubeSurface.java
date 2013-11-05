@@ -47,6 +47,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	private int twistedMode;
 	private final int[][] cube = new int[6][9];
 	private final int[][] initialCube = new int[6][9];
+	
 	private int persp; // perspective deformation
 	private int progressHeight = 6;
 	boolean hint;
@@ -447,40 +448,31 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		}
 		Log.d("SURFACE", "draw thread dead");
 	}
-	
-	private void CopyBlockArray(int blockIndex, int[][][] sourceArray) {
-		blockArray[blockIndex] = new int [sourceArray.length][][];
-		for (int i = 0; i < sourceArray.length; i++) {
-			blockArray[blockIndex][i] = new int [sourceArray[i].length][];
-			for (int j = 0; j < sourceArray[i].length; j++) {
-				blockArray[blockIndex][i][j] = new int [sourceArray[i][j].length];
-				for (int k = 0; k < sourceArray[i][j].length; k++) {
-					blockArray[blockIndex][i][j][k] = sourceArray[i][j][k];
-				}
-			}
-		}
-	}
 
 	public void doDraw(Canvas c) {
 		// Copy the state for drawing.
-		int[][] drawCube;
 		double currentAngleForDraw;
 		int twistedLayerForDraw;
 		boolean naturalForDraw;
 		int twistedModeForDraw;
+		final int[][] drawCube = new int[6][9];
 		synchronized (drawLock) {
-			// Copy the state for drawing.
-			drawCube = cube;
 			currentAngleForDraw = currentAngle;
 			twistedLayerForDraw = twistedLayer;
 			naturalForDraw = natural;
 			twistedModeForDraw = twistedMode;
 			
-			if (!naturalForDraw) {
-				CopyBlockArray(0, topBlocks);
-				CopyBlockArray(1, midBlocks);
-				CopyBlockArray(2, botBlocks);
+			// Copy the state for drawing.
+			for (int i = 0; i < 6; i++) {
+				for (int j = 0; j < 9; j++) {
+					drawCube[i][j] = cube[i][j];
+				}
 			}
+			
+			// TODO(bbrown): This should be a deep copy
+			blockArray[0] = topBlocks;
+			blockArray[1] = midBlocks;
+			blockArray[2] = botBlocks;
 		}
 		// Log.d("SURFACE", "drawing");
 		// create offscreen buffer for double buffering
@@ -800,12 +792,14 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	}
 
 	private void splitCube(int layer) {
-		for (int i = 0; i < 6; i++) { // for all faces
-			topBlocks[i] = TOP_BLOCK_TABLE[TOP_BLOCK_FACE_DIMENSION[layer][i]];
-			botBlocks[i] = TOP_BLOCK_TABLE[BOTTOM_BLOCK_FACE_DIMENSION[layer][i]];
-			midBlocks[i] = MID_BLOCK_TABLE[MID_BLOCK_FACE_DIMENSION[layer][i]];
+		synchronized (drawLock) {
+			for (int i = 0; i < 6; i++) { // for all faces
+				topBlocks[i] = TOP_BLOCK_TABLE[TOP_BLOCK_FACE_DIMENSION[layer][i]];
+				botBlocks[i] = TOP_BLOCK_TABLE[BOTTOM_BLOCK_FACE_DIMENSION[layer][i]];
+				midBlocks[i] = MID_BLOCK_TABLE[MID_BLOCK_FACE_DIMENSION[layer][i]];
+			}
+			natural = false;
 		}
-		natural = false;
 	}
 
 	private void twistLayers(int[][] cube, int layer, int num, int mode) {
