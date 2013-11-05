@@ -1,11 +1,9 @@
 package com.droidtools.rubiksolver;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ImageButton;
@@ -14,16 +12,16 @@ import android.widget.TextView;
 public class Instructions extends Activity {
 	
 	private PowerManager.WakeLock wl;
-	int position;
-	boolean preving = false;
-	boolean nexting = false;
-	CubeSurface cubeSurface;
-	TextView counterText;
-	TextView infoText;
-	ImageButton next;
-	ImageButton prev;
-	String[] moves = {"Z", "Z", "Z", "ZX'", "XX"};
-	static Map<Integer, Integer> colorMap = new HashMap<Integer, Integer>();
+	private int position;
+	private boolean preving = false;
+	private boolean nexting = false;
+	private CubeSurface cubeSurface;
+	private TextView counterText;
+	private TextView infoText;
+	private ImageButton next;
+	private ImageButton prev;
+	private static final String[] MOVES = {"Z", "Z", "Z", "ZX'", "XX"};
+	private static SparseIntArray colorMap = new SparseIntArray(6);
 	static {
 		colorMap.put(0, 0xFFFFFFFF);
 		colorMap.put(1, 0xFFFF0000);
@@ -129,7 +127,7 @@ public class Instructions extends Activity {
 
 			@Override
 			public void run() {
-				cubeSurface.move(RubikMove.getAnimRep(moves[position]), 1, false, true);
+				cubeSurface.move(RubikMove.getAnimRep(MOVES[position]), 1, false, true);
 				try {
 					synchronized (this) {
 						do {
@@ -163,7 +161,7 @@ public class Instructions extends Activity {
 
 			@Override
 			public void run() {
-				cubeSurface.move(RubikMove.getAnimRep(moves[position-1]), -1, false, true);
+				cubeSurface.move(RubikMove.getAnimRep(MOVES[position-1]), -1, false, true);
 				try {
 					synchronized (this) {
 						do {

@@ -1,16 +1,15 @@
 package com.droidtools.rubiksolver;
 
-import java.util.Map;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.SurfaceHolder.Callback;
+import android.view.SurfaceView;
 
 /*
  * Ported from:
@@ -54,7 +53,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	private int align;
 	private double faceShift;
 	boolean mRunning = false;
-	Map<Integer, Integer> colorMap;
+	SparseIntArray colorMap;
 
 	private static final double[] EYE = { 0.0, 0.0, -1.0 };
 	private static final double[] EYE_X = { 1.0, 0.0, 0.0 }; // (sideways)
@@ -294,8 +293,8 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		setFocusable(true); // make sure we get key events
 	}
 	
-	public void init(RubikCube.CubeState state, Map<Integer, Integer> map) {
-		init(state.toAnimCubeState(), map);
+	public void init(RubikCube.CubeState state, SparseIntArray colorMap) {
+		init(state.toAnimCubeState(), colorMap);
 	}
 	
 	public byte[] cubeState() {
@@ -310,8 +309,8 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		return state;
 	}
 
-	public void init(byte[] state, Map<Integer, Integer> map) {
-		colorMap = map;
+	public void init(byte[] state, SparseIntArray colorMap) {
+		this.colorMap = colorMap;
 		String param;
 		animThread = new Thread(this, "Cube Animator");
 		drawThread = new Thread(new Runnable() {
