@@ -73,10 +73,12 @@ public class ColorsAdapter extends BaseAdapter {
 		} else { // Reuse/Overwrite the View passed
 			nv = convertView;
 		}
-		if (mData == null) 
+		if (mData == null) {
+			// TODO(bbrown): position can be out of bounds of idArray when a bad cube is passed to the solver.
 			colorPos = idArray.get(position);
-		else
+		} else {
 			colorPos = mData.get(position);
+		}
 		((FaceletView) nv).updateView(String.format("Color %02d", colorPos),
 				mDecoder.getBitmap(colorPos));
 		return nv;
