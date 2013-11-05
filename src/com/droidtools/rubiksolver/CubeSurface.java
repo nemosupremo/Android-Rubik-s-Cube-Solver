@@ -40,7 +40,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	boolean twisting;
 	boolean natural = true;
 	boolean spinning;
-	double originalAngle;
+	private final double originalAngle = 0;
 	double currentAngle;
 	private int twistedLayer;
 	private int twistedMode;
@@ -271,6 +271,8 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	private int[][] move;
 	private int[][] demoMove;*/
 	private int[] curMove;
+	
+	private Object drawLock = new Object();
 
 	public CubeSurface(Context context, AttributeSet attrs) {
 		super(context, attrs);
@@ -308,7 +310,9 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 					try {
 						c = surfaceHolder.lockCanvas(null);
 						synchronized (surfaceHolder) {
-							doDraw(c);
+							if (c != null) {
+								doDraw(c);
+							}
 						}
 					} finally {
 						// do this in a finally so that if an exception is
@@ -433,8 +437,41 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		}
 		Log.d("SURFACE", "draw thread dead");
 	}
+	
+	private void CopyBlockArray(int blockIndex, int[][][] sourceArray) {
+		blockArray[blockIndex] = new int [sourceArray.length][][];
+		for (int i = 0; i < sourceArray.length; i++) {
+			blockArray[blockIndex][i] = new int [sourceArray[i].length][];
+			for (int j = 0; j < sourceArray[i].length; j++) {
+				blockArray[blockIndex][i][j] = new int [sourceArray[i][j].length];
+				for (int k = 0; k < sourceArray[i][j].length; k++) {
+					blockArray[blockIndex][i][j][k] = sourceArray[i][j][k];
+				}
+			}
+		}
+	}
 
 	public void doDraw(Canvas c) {
+		// Copy the state for drawing.
+		int[][] drawCube;
+		double currentAngleForDraw;
+		int twistedLayerForDraw;
+		boolean naturalForDraw;
+		int twistedModeForDraw;
+		synchronized (drawLock) {
+			// Copy the state for drawing.
+			drawCube = cube;
+			currentAngleForDraw = currentAngle;
+			twistedLayerForDraw = twistedLayer;
+			naturalForDraw = natural;
+			twistedModeForDraw = twistedMode;
+			
+			if (!naturalForDraw) {
+				CopyBlockArray(0, topBlocks);
+				CopyBlockArray(1, midBlocks);
+				CopyBlockArray(2, botBlocks);
+			}
+		}
 		// Log.d("SURFACE", "drawing");
 		// create offscreen buffer for double buffering
 		/*
@@ -451,19 +488,19 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 		c.drawColor(0xFF000000);
 		// synchronized (animThread) {
 		// dragAreas = 0;
-		if (natural) // compact cube
-			fixBlock(c, eye, eyeX, eyeY, cubeBlocks, 3); // draw cube and fill
+		if (naturalForDraw) // compact cube
+			fixBlock(c, eye, eyeX, eyeY, cubeBlocks, 3, drawCube); // draw cube and fill
 															// drag areas
 		else { // in twisted state
 				// compute top observer
-			double cosA = Math.cos(originalAngle + currentAngle);
-			double sinA = Math.sin(originalAngle + currentAngle)
-					* rotSign[twistedLayer];
+			double cosA = Math.cos(originalAngle + currentAngleForDraw);
+			double sinA = Math.sin(originalAngle + currentAngleForDraw)
+					* rotSign[twistedLayerForDraw];
 			for (int i = 0; i < 3; i++) {
 				tempEye[i] = 0;
 				tempEyeX[i] = 0;
 				for (int j = 0; j < 3; j++) {
-					int axis = twistedLayer / 2;
+					int axis = twistedLayerForDraw / 2;
 					tempEye[i] += eye[j]
 							* (rotVec[axis][i][j] + rotCos[axis][i][j] * cosA + rotSin[axis][i][j]
 									* sinA);
@@ -474,14 +511,14 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			}
 			vMul(tempEyeY, tempEye, tempEyeX);
 			// compute bottom anti-observer
-			double cosB = Math.cos(originalAngle - currentAngle);
-			double sinB = Math.sin(originalAngle - currentAngle)
-					* rotSign[twistedLayer];
+			double cosB = Math.cos(originalAngle - currentAngleForDraw);
+			double sinB = Math.sin(originalAngle - currentAngleForDraw)
+					* rotSign[twistedLayerForDraw];
 			for (int i = 0; i < 3; i++) {
 				tempEye2[i] = 0;
 				tempEyeX2[i] = 0;
 				for (int j = 0; j < 3; j++) {
-					int axis = twistedLayer / 2;
+					int axis = twistedLayerForDraw / 2;
 					tempEye2[i] += eye[j]
 							* (rotVec[axis][i][j] + rotCos[axis][i][j] * cosB + rotSin[axis][i][j]
 									* sinB);
@@ -500,18 +537,16 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 			eyeArray[2] = tempEye2;
 			eyeArrayX[2] = tempEyeX2;
 			eyeArrayY[2] = tempEyeY2;
-			blockArray[0] = topBlocks;
-			blockArray[1] = midBlocks;
-			blockArray[2] = botBlocks;
+			
 			// perspective corrections
 			vSub(vScale(vCopy(perspEye, eye), 5.0 + persp),
-					vScale(vCopy(perspNormal, faceNormals[twistedLayer]),
+					vScale(vCopy(perspNormal, faceNormals[twistedLayerForDraw]),
 							1.0 / 3.0));
 			vSub(vScale(vCopy(perspEyeI, eye), 5.0 + persp),
-					vScale(vCopy(perspNormal, faceNormals[twistedLayer ^ 1]),
+					vScale(vCopy(perspNormal, faceNormals[twistedLayerForDraw ^ 1]),
 							1.0 / 3.0));
-			double topProd = vProd(perspEye, faceNormals[twistedLayer]);
-			double botProd = vProd(perspEyeI, faceNormals[twistedLayer ^ 1]);
+			double topProd = vProd(perspEye, faceNormals[twistedLayerForDraw]);
+			double botProd = vProd(perspEyeI, faceNormals[twistedLayerForDraw ^ 1]);
 			int orderMode;
 			if (topProd < 0 && botProd > 0) // top facing away
 				orderMode = 0;
@@ -522,23 +557,26 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 				// both top and bottom layer facing away: draw them first
 				orderMode = 2;
 			fixBlock(c,
-					eyeArray[eyeOrder[twistedMode][drawOrder[orderMode][0]]],
-					eyeArrayX[eyeOrder[twistedMode][drawOrder[orderMode][0]]],
-					eyeArrayY[eyeOrder[twistedMode][drawOrder[orderMode][0]]],
+					eyeArray[eyeOrder[twistedModeForDraw][drawOrder[orderMode][0]]],
+					eyeArrayX[eyeOrder[twistedModeForDraw][drawOrder[orderMode][0]]],
+					eyeArrayY[eyeOrder[twistedModeForDraw][drawOrder[orderMode][0]]],
 					blockArray[drawOrder[orderMode][0]],
-					blockMode[twistedMode][drawOrder[orderMode][0]]);
+					blockMode[twistedModeForDraw][drawOrder[orderMode][0]],
+					drawCube);
 			fixBlock(c,
-					eyeArray[eyeOrder[twistedMode][drawOrder[orderMode][1]]],
-					eyeArrayX[eyeOrder[twistedMode][drawOrder[orderMode][1]]],
-					eyeArrayY[eyeOrder[twistedMode][drawOrder[orderMode][1]]],
+					eyeArray[eyeOrder[twistedModeForDraw][drawOrder[orderMode][1]]],
+					eyeArrayX[eyeOrder[twistedModeForDraw][drawOrder[orderMode][1]]],
+					eyeArrayY[eyeOrder[twistedModeForDraw][drawOrder[orderMode][1]]],
 					blockArray[drawOrder[orderMode][1]],
-					blockMode[twistedMode][drawOrder[orderMode][1]]);
+					blockMode[twistedModeForDraw][drawOrder[orderMode][1]],
+					drawCube);
 			fixBlock(c,
-					eyeArray[eyeOrder[twistedMode][drawOrder[orderMode][2]]],
-					eyeArrayX[eyeOrder[twistedMode][drawOrder[orderMode][2]]],
-					eyeArrayY[eyeOrder[twistedMode][drawOrder[orderMode][2]]],
+					eyeArray[eyeOrder[twistedModeForDraw][drawOrder[orderMode][2]]],
+					eyeArrayX[eyeOrder[twistedModeForDraw][drawOrder[orderMode][2]]],
+					eyeArrayY[eyeOrder[twistedModeForDraw][drawOrder[orderMode][2]]],
 					blockArray[drawOrder[orderMode][2]],
-					blockMode[twistedMode][drawOrder[orderMode][2]]);
+					blockMode[twistedModeForDraw][drawOrder[orderMode][2]],
+					drawCube);
 		}
 		// if (!pushed && !animating) // no button should be deceased
 		// buttonPressed = -1;
@@ -698,10 +736,13 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 
 	private void spin(int layer, int num, int mode, boolean clockwise,
 			boolean animated) {
-		twisting = false;
-		natural = true;
-		spinning = true;
-		originalAngle = 0;
+
+		synchronized (drawLock) {
+			twisting = false;
+			natural = true;
+			spinning = true;
+			//originalAngle = 0;
+		}
 		if (faceTwistDirs[layer] > 0)
 			clockwise = !clockwise;
 		if (animated) {
@@ -713,27 +754,37 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 				turnTime = 67 * doubleSpeed; // double turn is usually faster
 												// than two quarter turns
 			}
-			twisting = true;
-			twistedLayer = layer;
-			twistedMode = mode;
-			splitCube(layer); // start twisting
+			synchronized (drawLock) {
+				twisting = true;
+				twistedLayer = layer;
+				twistedMode = mode;
+				splitCube(layer); // start twisting
+			}
 			long sTime = System.currentTimeMillis();
 			long lTime = sTime;
 			double d = phis * phit / turnTime;
-			for (currentAngle = 0; currentAngle * phis < phit; currentAngle = d
-					* (lTime - sTime)) {
+			final double epsilon = 0.00001;
+			for (currentAngle = 0; currentAngle * phis < (phit - epsilon); ) {
 				// repaint();
 				sleep(25);
 				if (interrupted || restarted)
 					break;
 				lTime = System.currentTimeMillis();
+				
+				synchronized (drawLock) {
+					currentAngle = d * (lTime - sTime);
+				}
 			}
 		}
-		currentAngle = 0;
-		twisting = false;
-		natural = true;
-		twistLayers(cube, layer, num, mode);
-		spinning = false;
+	
+		synchronized (drawLock) {
+			currentAngle = 0;
+			twisting = false;
+			natural = true;
+			twistLayers(cube, layer, num, mode);
+			spinning = false;
+		}
+		
 		// if (animated)
 		// repaint();
 	}
@@ -830,7 +881,7 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 	}
 
 	private void fixBlock(Canvas c, double[] eye, double[] eyeX, double[] eyeY,
-			int[][][] blocks, int mode) {
+			int[][][] blocks, int mode, int[][] drawCube) {
 		// project 3D co-ordinates into 2D screen ones
 		for (int i = 0; i < 8; i++) {
 			double min = mCanvasWidth < mCanvasHeight ? mCanvasWidth
@@ -885,16 +936,16 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 									fillY[j] -= y;
 								}
 								drawPolygon(c,
-										colorMap.get(cube[i][p * 3 + q]),
+										colorMap.get(drawCube[i][p * 3 + q]),
 										fillX, fillY, 4, true);
-								// graphics.setColor(colors[cube[i][p * 3 +
+								// graphics.setColor(colors[drawCube[i][p * 3 +
 								// q]]);
 								// graphics.fillPolygon(fillX, fillY, 4);
 								drawPolygon(
 										c,
-										darker(colorMap.get(cube[i][p * 3 + q])),
+										darker(colorMap.get(drawCube[i][p * 3 + q])),
 										fillX, fillY, 4, false);
-								// graphics.setColor(colors[cube[i][p * 3 + q]]
+								// graphics.setColor(colors[drawCube[i][p * 3 + q]]
 								// .darker());
 								// graphics.drawPolygon(fillX, fillY, 4);
 							}
@@ -965,14 +1016,14 @@ public class CubeSurface extends SurfaceView implements Callback, Runnable {
 										q + border[j][0], p + border[j][1],
 										mirrored);
 							drawPolygon(c,
-									darker(colorMap.get(cube[i][p * 3 + q])),
+									darker(colorMap.get(drawCube[i][p * 3 + q])),
 									fillX, fillY, 4, false);
-							// graphics.setColor(colors[cube[i][p * 3 + q]]
+							// graphics.setColor(colors[drawCube[i][p * 3 + q]]
 							// .darker());
 							// graphics.drawPolygon(fillX, fillY, 4);
-							drawPolygon(c, colorMap.get(cube[i][p * 3 + q]),
+							drawPolygon(c, colorMap.get(drawCube[i][p * 3 + q]),
 									fillX, fillY, 4, true);
-							// graphics.setColor(colors[cube[i][p * 3 + q]]);
+							// graphics.setColor(colors[drawCube[i][p * 3 + q]]);
 							// graphics.fillPolygon(fillX, fillY, 4);
 						}
 					}
