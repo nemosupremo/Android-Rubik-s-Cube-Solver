@@ -39,4 +39,6 @@ Source Code available at &lt;https://github.com/nemothekid/Android-Rubik-s-Cube-
     <string name="insStep6">Turn the entire cube down so that you are looking at the down face from the front. Take the final picture and press solve.</string>
     <string name="insStep7">Solve!</string>
     <string name="colorPageFormat">Color %1$d/6</string>
+    <string name="solved">Solved!</string>
+    <string name="simpleCounter">%1$d/%2$d</string>
 </resources>

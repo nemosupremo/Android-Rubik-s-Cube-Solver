@@ -112,7 +112,6 @@ public class StepSolution extends Activity implements Runnable {
 		PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNotDimScreen");
         counterText.setText(String.format("%d/%d", position+1, sol.size()));
-		
 	}
 	
 	@Override
@@ -135,7 +134,14 @@ public class StepSolution extends Activity implements Runnable {
 		moveNav.postInvalidate();
 		counterText.post(new Runnable() {
 	        public void run() {
-	        	counterText.setText(String.format("%d/%d", position+1, sol.size()));
+	        	int step = position + 1;
+	        	int size = sol.size();
+	        	if (step > size) {
+	        		counterText.setText(getString(R.string.solved));
+	        	} else {
+	        		counterText.setText(String.format(
+	        				getString(R.string.simpleCounter), position+1, sol.size()));	
+	        	}
 	        }
 	      });
 	}
@@ -146,7 +152,8 @@ public class StepSolution extends Activity implements Runnable {
 		moveNav.postInvalidate();
 		counterText.post(new Runnable() {
 	        public void run() {
-	        	counterText.setText(String.format("%d/%d", position+1, sol.size()));
+	        	counterText.setText(String.format(
+	        			getString(R.string.simpleCounter), position+1, sol.size()));
 	        }
 	      });
 	}
