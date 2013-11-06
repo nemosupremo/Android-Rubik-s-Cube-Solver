@@ -1,5 +1,6 @@
 package com.droidtools.rubiksolver;
 
+import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -21,7 +22,8 @@ public class SelectColorAdapter extends BaseAdapter {
 
 	@Override
 	public Object getItem(int position) {
-		return mDecoder.getIdArray().get(position);
+		Byte colorByte = mDecoder.getSortedId(position);
+		return colorByte != null ? colorByte : new Byte((byte) 0);
 	}
 
 	@Override
@@ -32,15 +34,16 @@ public class SelectColorAdapter extends BaseAdapter {
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
 		View nv;
-		byte colorPos;
 		if (convertView == null) {
 			nv = new SelectFaceletView(parent.getContext());
 		} else { // Reuse/Overwrite the View passed
 			nv = convertView;
 		}
-		colorPos = mDecoder.getIdArray().get(position);
-		((SelectFaceletView) nv).updateView(String.format("Color %02d", colorPos),
-				mDecoder.getBitmap(colorPos));
+		Byte colorId = mDecoder.getSortedId(position);
+		Bitmap bitmap = mDecoder.getBitmap(colorId);
+		if (bitmap != null) {
+			((SelectFaceletView) nv).updateView(String.format("Color %02d", colorId), bitmap);
+		}
 		return nv;
 	}
 

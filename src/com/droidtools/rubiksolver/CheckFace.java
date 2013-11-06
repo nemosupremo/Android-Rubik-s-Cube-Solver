@@ -3,7 +3,7 @@ package com.droidtools.rubiksolver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -132,7 +132,7 @@ public class CheckFace extends Activity {
 	@Override
 	protected  void onResume() {
 		super.onResume();
-		if (decoder == null || decoder.getIds().size() == 0)
+		if (decoder == null || decoder.colorSize() == 0)
 			LoadCube.goHome(this);
 	}
 	
@@ -254,11 +254,9 @@ public class CheckFace extends Activity {
 			colorFix = new ArrayList<List<Byte>>();
 			for (int i=0; i<6; i++) 
 				colorFix.add(new ArrayList<Byte>());
-			ungroupedColors = new ArrayList<Byte>();
-			List<Byte> idArr = decoder.getIdArray();
-			for (int i=1; i<idArr.size(); i++) 
-				ungroupedColors.add(idArr.get(i).byteValue());
-			colorFix.get(colorPage).add(idArr.get(0).byteValue());
+			// TODO(bbrown): Verify that this actually copies the keys into the list.
+			ungroupedColors = new ArrayList<Byte>(decoder.getAllButFirstIds());
+			colorFix.get(colorPage).add(decoder.getFirstId());
 			
 			groupAdapter = new ColorsAdapter(colorFix.get(colorPage), decoder);
 			ungroupAdapter = new ColorsAdapter(ungroupedColors, decoder);
@@ -449,12 +447,8 @@ public class CheckFace extends Activity {
 			}
 		}*/
 		//for (Map.Entry<Integer, Parcelable[]> entry : decoder.entrySet()) {
-		Set<Byte> ids = decoder.getIds();
-		for ( Byte id : ids)
-		{
-		    if (!usedColors.contains(id)) // auto unboxing again  :wink: 
-		       decoder.removeColor(id);
-		}
+
+		decoder.removeUnusedColors(usedColors);
 		((ColorsAdapter) mColorsList.getAdapter()).notifyDataSetChanged();
 		((FaceAdapter) mColorsGrid.getAdapter()).notifyDataSetChanged();
 		//showDialog(DIALOG_FIX_COLORS);
@@ -580,8 +574,7 @@ public class CheckFace extends Activity {
 				oos.close();
 
 				ContentValues cv = new ContentValues();
-				cv.put(HistoryProvider.NAME, new SimpleDateFormat(
-						"MMM dd hh:mm a").format(new Date(System
+				cv.put(HistoryProvider.NAME, DateFormat.getDateTimeInstance().format(new Date(System
 						.currentTimeMillis())));
 				cv.put(HistoryProvider.MOVES, baos.toByteArray());
 				cv.put(HistoryProvider.STATE, cubeState);

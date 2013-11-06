@@ -1,5 +1,6 @@
 package com.droidtools.rubiksolver;
 
+import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -45,8 +46,11 @@ public class FaceAdapter extends BaseAdapter {
 			nv = convertView;
 		}
 		colorPos = mData[position];
-		((FaceletView) nv).updateView(String.format("Color %02d", colorPos),
-				mDecoder.getBitmap(colorPos));
+		// TODO(bbrown): We probably want to show a default image if the bitmap is null.
+		Bitmap bitmap = mDecoder.getBitmap(colorPos);
+		if (bitmap != null) {
+			((FaceletView) nv).updateView(String.format("Color %02d", colorPos), bitmap);
+		}
 		return nv;
 	}
 
