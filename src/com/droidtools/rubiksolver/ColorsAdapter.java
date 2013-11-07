@@ -11,15 +11,14 @@ public class ColorsAdapter extends BaseAdapter {
 
 	List<Byte> mData;
 	ColorDecoder mDecoder;
-	int lastSize = -1;
 	
 	public ColorsAdapter(ColorDecoder decoder) {
-		mData =  null; //new ArrayList<Integer>(decoder.getIds());
+		mData =  null;
 		mDecoder = decoder;
 	}
 	
 	public ColorsAdapter(List<Byte> results, ColorDecoder decoder) {
-		mData =  results; //new ArrayList<Integer>(decoder.getIds());
+		mData =  results;
 		mDecoder = decoder;
 	}
 
@@ -57,31 +56,23 @@ public class ColorsAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		if (lastSize != mDecoder.colorSize()) {
-			// TODO(bbrown): A change in size is a bad way to track change.
-			// We should be notified of a change in a thread safe way.
-			lastSize = mDecoder.colorSize();
-			notifyDataSetChanged();
-		}
 		View nv;
-		byte colorPos;
 		if (convertView == null) {
 			nv = new FaceletView(parent.getContext());
 		} else { // Reuse/Overwrite the View passed
 			nv = convertView;
 		}
-		if (mData == null) {
-			// TODO(bbrown): position can be out of bounds of idArray when a bad cube is passed to the solver.
-			colorPos = mDecoder.getSortedId(position);
-		} else {
-			colorPos = mData.get(position);
-		}
 		
-		// TODO(bbrown): We probably want to show a default image if the bitmap is null.
-		Bitmap bitmap = mDecoder.getBitmap(colorPos);
-		if (bitmap != null) {
-			((FaceletView) nv).updateView(String.format("Color %02d", colorPos), bitmap);
+		Byte colorId;
+		if (mData == null) {
+			colorId = mDecoder.getSortedId(position);
+		} else {
+			colorId = mData.get(position);
 		}
+
+		Bitmap bitmap = mDecoder.getBitmap(colorId);
+        ((FaceletView) nv).updateView(String.format("Color %02d", colorId), bitmap);
+
 		return nv;
 	}
 

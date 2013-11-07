@@ -1,5 +1,7 @@
 package com.droidtools.rubiksolver;
 
+import java.util.Arrays;
+
 import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
@@ -7,11 +9,13 @@ import android.widget.BaseAdapter;
 
 public class FaceAdapter extends BaseAdapter {
 
+    // TODO(bbrown): Make this private. Problem now is this is referenced then
+    // later modified.
 	byte[] mData;
-	ColorDecoder mDecoder;
+	private ColorDecoder mDecoder;
 	
 	public FaceAdapter(byte[] results, ColorDecoder decoder) {
-		mData =  results; //new ArrayList<Integer>(decoder.getIds());
+		mData =  results;
 		mDecoder = decoder;
 	}
 
@@ -24,6 +28,18 @@ public class FaceAdapter extends BaseAdapter {
 	@Override
 	public Object getItem(int position) {
 		return mData[position];
+	}
+	
+	public void setItem(int position, byte item) {
+		mData[position] = item;
+		notifyDataSetChanged();
+	}
+	
+	/**
+	 * Returns a copy of the internal data.
+	 */
+	public byte[] getData() {
+		return Arrays.copyOf(mData, mData.length);
 	}
 
 	@Override
@@ -46,12 +62,10 @@ public class FaceAdapter extends BaseAdapter {
 			nv = convertView;
 		}
 		colorPos = mData[position];
-		// TODO(bbrown): We probably want to show a default image if the bitmap is null.
+
 		Bitmap bitmap = mDecoder.getBitmap(colorPos);
-		if (bitmap != null) {
-			((FaceletView) nv).updateView(String.format("Color %02d", colorPos), bitmap);
-		}
+		((FaceletView) nv).updateView(String.format("Color %02d", colorPos), bitmap);
+		
 		return nv;
 	}
-
 }

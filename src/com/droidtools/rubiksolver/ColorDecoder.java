@@ -343,7 +343,6 @@ public class ColorDecoder implements Parcelable {
 				}
 				
 			}
-			
 
 			Collections.sort(subCubes);
 			l = (int) (subCubes.size() * .35);

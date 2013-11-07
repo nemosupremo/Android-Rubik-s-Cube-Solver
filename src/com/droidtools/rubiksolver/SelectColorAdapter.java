@@ -7,12 +7,10 @@ import android.widget.BaseAdapter;
 
 public class SelectColorAdapter extends BaseAdapter {
 	
-	//List<Byte> mData; 
 	ColorDecoder mDecoder;
 	
 	public SelectColorAdapter(ColorDecoder decoder) {
 		mDecoder = decoder;
-		//mData = new ArrayList<Byte>(mDecoder.getIds());
 	}
 
 	@Override
@@ -41,9 +39,8 @@ public class SelectColorAdapter extends BaseAdapter {
 		}
 		Byte colorId = mDecoder.getSortedId(position);
 		Bitmap bitmap = mDecoder.getBitmap(colorId);
-		if (bitmap != null) {
-			((SelectFaceletView) nv).updateView(String.format("Color %02d", colorId), bitmap);
-		}
+		((SelectFaceletView) nv).updateView(String.format("Color %02d", colorId), bitmap);
+
 		return nv;
 	}
 
