@@ -5,11 +5,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -19,13 +22,15 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
 
+/**
+ * ColorDecoder is NOT thread safe. Working on it.
+ */
 public class ColorDecoder implements Parcelable {
 	//private List<HColor> colors;
 	//private List<Bitmap> images;
-	private Map<Byte, Parcelable[]> ids;
+	private ConcurrentNavigableMap<Byte, Parcelable[]> ids;
 	byte firstNewCol;
 	byte nextId;
-	private List<Byte> idArray;
 	String cacheDir;
 	
 	/*static {
@@ -35,24 +40,20 @@ public class ColorDecoder implements Parcelable {
 	public ColorDecoder(String cache) {
 		//colors = new ArrayList<HColor>();
 		//images = new ArrayList<Bitmap>();
-		ids = new HashMap<Byte, Parcelable[]>();
-		idArray = new ArrayList<Byte>();
+		ids = new ConcurrentSkipListMap<Byte, Parcelable[]>();
 		//firstNewCol = 0;
 		nextId = 0;
 		cacheDir = cache;
 	}
 	
-	public List<Byte> getIdArray() {
-		return idArray;
-	}
+//	private void free() {
+//		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
+//			Log.d("DECODER", "(free) Recycling bitmap " + entry.getKey());
+//			((Bitmap)entry.getValue()[1]).recycle();
+//		}
+//	}
 	
-	public void free() {
-		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
-			((Bitmap)entry.getValue()[1]).recycle();
-		}
-	}
-	
-	protected static int sobel(Bitmap image, int x, int y) {
+	private static int sobel(Bitmap image, int x, int y) {
 		int r, g, b, color, horizSobel, vertSobel;
 		int[][] sob = new int[3][3];
 		for (int i = -1; i <= 1; i++) {
@@ -74,47 +75,44 @@ public class ColorDecoder implements Parcelable {
 	}
 	
 	//protected static native int[][] nativeSobelData(Bitmap bitmap);
+//	
+//	protected static int[][] sobelData(Bitmap image) {
+//		int r,g,b,color,horizSobel,vertSobel;
+//		int imWidth = image.getWidth();
+//		int imHeight = image.getHeight();
+//		//Log.d("DAT", String.format("Width - %d Height %d", imWidth, imHeight));
+//		int[][] out = new int[imWidth][imHeight];  
+//		int[][] sob = new int[3][3];
+//		for (int x=1; x<imWidth-1; x++) {
+//			for (int y=1; y<imHeight-1; y++) {
+//				for (int i=-1; i<=1; i++) {
+//					for (int j=-1; j<=1; j++) {
+//						color = image.getPixel(x+i,y+j);
+//						r = (color >> 16) & 0xFF;
+//						g = (color >> 8) & 0xFF;
+//						b = color & 0xFF;
+//						sob[i+1][j+1] = (int) (r * 299.0/1000 + g * 587.0/1000 + b * 114.0/1000);
+//					}
+//				}
+//				horizSobel = -(sob[1-1][1-1]) + 
+//			      (sob[1+1][1-1]) - 
+//			      (sob[1-1][1]) - (sob[1-1][1]) +
+//			      (sob[1+1][1]) + (sob[1+1][1]) -
+//			      (sob[1-1][1+1]) + 
+//			      (sob[1+1][1+1]);
+//	            vertSobel =  -(sob[1-1][1-1]) - 
+//	            (sob[1][1-1]) - sob[1][1-1] - 
+//	            (sob[1+1][1-1]) +
+//	            (sob[1-1][1+1]) + 
+//	            (sob[1][1+1]) + (sob[1][1+1]) + 
+//	            (sob[1+1][1+1]);
+//	           out[x][y] = Math.min(255, Math.max(0, (horizSobel+vertSobel)/2));
+//			}
+//		}
+//		return out;
+//	}
 	
-	protected static int[][] sobelData(Bitmap image) {
-		int r,g,b,color,horizSobel,vertSobel;
-		int imWidth = image.getWidth();
-		int imHeight = image.getHeight();
-		//Log.d("DAT", String.format("Width - %d Height %d", imWidth, imHeight));
-		int[][] out = new int[imWidth][imHeight];  
-		int[][] sob = new int[3][3];
-		for (int x=1; x<imWidth-1; x++) {
-			for (int y=1; y<imHeight-1; y++) {
-				for (int i=-1; i<=1; i++) {
-					for (int j=-1; j<=1; j++) {
-						color = image.getPixel(x+i,y+j);
-						r = (color >> 16) & 0xFF;
-						g = (color >> 8) & 0xFF;
-						b = color & 0xFF;
-						sob[i+1][j+1] = (int) (r * 299.0/1000 + g * 587.0/1000 + b * 114.0/1000);
-					}
-				}
-				horizSobel = -(sob[1-1][1-1]) + 
-			      (sob[1+1][1-1]) - 
-			      (sob[1-1][1]) - (sob[1-1][1]) +
-			      (sob[1+1][1]) + (sob[1+1][1]) -
-			      (sob[1-1][1+1]) + 
-			      (sob[1+1][1+1]);
-	            vertSobel =  -(sob[1-1][1-1]) - 
-	            (sob[1][1-1]) - sob[1][1-1] - 
-	            (sob[1+1][1-1]) +
-	            (sob[1-1][1+1]) + 
-	            (sob[1][1+1]) + (sob[1][1+1]) + 
-	            (sob[1+1][1+1]);
-	           out[x][y] = Math.min(255, Math.max(0, (horizSobel+vertSobel)/2));
-			}
-		}
-		
-		
-		return out;
-		
-	}
-	
-	protected HColor avg(List<HColor> L) {
+	private HColor avg(List<HColor> L) {
 		double h,l,s;
 		int r,g,b;
 		h=l=s=0;
@@ -131,74 +129,128 @@ public class ColorDecoder implements Parcelable {
 		if (sz == 0) return new HColor(0.0,0.0,0.0,0,0,0);
 		return new HColor(h/sz, l/sz, s/sz, r/sz, g/sz, b/sz);
 	}
-	
+
 	public HColor getColor(byte key) {
-		return (HColor)ids.get(key)[0];
-	}
-	
-	public Bitmap getBitmap(byte key) {
-		//Log.d("DECODER", "Trying to access key "+key);
-		return (Bitmap)ids.get(key)[1];
-	}
-	
-	public void removeColor(byte key) {
-		//colors.remove(position);
-		//images.remove(position);
-		//Log.d("DECODER", "Removing key "+key);
-		HColor v = (HColor) ids.get(key)[0];
-		try {
-			File outPath = new File(cacheDir, v.toString());
-			if (outPath.exists()) {
-				outPath.delete();
-			}
-		} catch (Exception e)
-		{
+		Parcelable[] color = ids.get(key);
+		if (color != null) {
+			return (HColor) color[0];
 		}
-		ids.remove(key);
-		idArray = new ArrayList<Byte>(ids.keySet());
-		Collections.sort(idArray);
+		return null;
 	}
 	
+	/**
+	 * Returns the bitmap for the given id.
+	 * @param id of the Bitmap
+	 * @return Bitmap with the given id or null if not found
+	 */
+	public Bitmap getBitmap(Byte id) {
+		Log.d("DECODER", "Trying to access key " + id);
+		Log.d("DECODER", "ids size = " + ids.size());
+		Parcelable[] color = ids.get(id);
+		if (color != null) {
+			return (Bitmap)color[1];
+		}
+		return null;
+	}
+	
+	/**
+	 * Removes the color with the given id including the underlying
+	 * bitmap file on disk.
+	 * @param id of the color to remove
+	 */
+	public void removeColor(byte id) {
+		Log.d("DECODER", "Removing key " + id);
+		Parcelable[] color = ids.get(id);
+		HColor v = (HColor) color[0];
+		File outPath = new File(cacheDir, v.toString());
+		if (outPath.exists()) {
+			if (!outPath.delete()) {
+				Log.e("DECODER", "Failed to delete file: " + outPath.getAbsolutePath());
+			}
+		}
+		if (!ids.remove(id, color)) {
+			throw new ConcurrentModificationException(
+					"Value at ID " + id + " was modified while trying to be removed.");
+		}
+	}
+	
+	/**
+	 * Number of colors that have been decoded.
+	 * @return number of colors
+	 */
 	public int colorSize() {
 		return ids.size();
-	}
-	
-	public Set<Map.Entry<Byte, Parcelable[]>> entrySet() {
-		return ids.entrySet();
 	}
 	
 	public boolean hasId(byte id) {
 		return ids.containsKey(id);
 	}
 	
-	public Set<Byte> getIds() {
-		return new HashSet<Byte>(ids.keySet());
+	/**
+	 * Returns the first (0th) color key.
+	 * @return the first key or null if no keys
+	 */
+	public Byte getFirstId() {
+		if (!ids.isEmpty()) {
+			return ids.firstKey();
+		}
+		return null;
 	}
 	
-	public void deleteImages() 
+	/**
+	 * Gets an unmodifiable sorted set of the color keys.
+	 * @return the sorted set of keys
+	 */
+	public SortedSet<Byte> getIds() {
+		return Collections.unmodifiableSortedSet(ids.keySet());
+	}
+	
+	/**
+	 * Gets an unmodifiable sorted set of the color keys. If
+	 * their is 1 or less keys and empty set is returned.
+	 * @return the sorted set of keys
+	 */
+	public SortedSet<Byte> getAllButFirstIds() {
+		if (ids.size() > 1) {
+			return Collections.unmodifiableSortedSet(
+					ids.keySet().tailSet(ids.firstKey(), false));
+		} else {
+			return Collections.unmodifiableSortedSet(new TreeSet<Byte>());
+		}
+	}
+	
+	
+	private void deleteImages() 
 	{
 		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
 			HColor v = (HColor) entry.getValue()[0];
-			try {
+			// try {
 				File outPath = new File(cacheDir, v.toString());
 				if (outPath.exists()) {
-					outPath.delete();
+					if (!outPath.delete()) {
+						Log.e("DECODER", "Failed to delete file: " + outPath.getAbsolutePath());
+					}
 				}
-			} catch (Exception e)
-			{
-			}
+			//} catch (Exception e)
+			//{
+			//}
 		}
-		
 	}
 	
 	public byte[] colorArray() {
 		byte[] ret = new byte[5*ids.size()];
 		int i = 0;
 		for (Map.Entry<Byte, Parcelable[]> entry : ids.entrySet()) {
+			if (i >= ret.length) {
+				throw new ConcurrentModificationException("Keys were added to ids while trying to create the colorArray");
+			}
 			ret[i] = entry.getKey();
 			i++;
 			System.arraycopy(((HColor)entry.getValue()[0]).asByteArray(), 0, ret, i, ((HColor)entry.getValue()[0]).asByteArray().length);
 			i += ((HColor)entry.getValue()[0]).asByteArray().length;
+		}
+		if (i < ret.length) {
+			throw new ConcurrentModificationException("Keys were removed from ids while trying to create the colorArray");
 		}
 		return ret;
 	}
@@ -206,10 +258,12 @@ public class ColorDecoder implements Parcelable {
 	public void clear() {
 		//colors.clear();
 		//images.clear();
-		free();
+		Log.d("DECODER", "(Clear) Clearing ids");
+		// This recycles the bitmaps, but because the views may still have
+		// references to the bitmaps we should not explicitly recycle them
+		// free();
 		deleteImages();
 		ids.clear();
-		idArray = new ArrayList<Byte>(ids.keySet());
 	}
 	
 	public byte[] decode(Bitmap im) {
@@ -289,7 +343,6 @@ public class ColorDecoder implements Parcelable {
 				}
 				
 			}
-			
 
 			Collections.sort(subCubes);
 			l = (int) (subCubes.size() * .35);
@@ -348,6 +401,7 @@ public class ColorDecoder implements Parcelable {
 			        imref = Bitmap.createBitmap(imref, 0, 0,
 			        		imref.getWidth(), imref.getHeight(), matrix, true);
 				}
+				Log.d("DECODER", "(decode) Adding key "+nextId);
 				ids.put(nextId, new Parcelable[]{cubeVals.get(i), imref});
 				//images.add(Bitmap.createBitmap(im, x1, y1, sideLength / 3, sideLength / 3));
 				//ret.add(colors.size()-1);
@@ -359,8 +413,6 @@ public class ColorDecoder implements Parcelable {
 		long funcTime = e-s;
 		Log.d("DECODER", String.format("Sobel time - %dms", sobelTime));
 		Log.d("DECODER", String.format("Func time - %dms", funcTime));
-		idArray = new ArrayList<Byte>(ids.keySet());
-		Collections.sort(idArray);
 		return ret;
 		
 	}
@@ -395,13 +447,12 @@ public class ColorDecoder implements Parcelable {
 			//((Bitmap)entry.getValue()[1]).compress(Bitmap.CompressFormat.JPEG, 90, outStream);
 			//ids.put(keys[i], b.getParcelableArray(""+keys[i]));
 			Parcelable[] tw = {v[0], f};
+			Log.d("DECODER", "(ColorDecoder) Adding key "+keys[i]);
 			ids.put(keys[i], tw);
 		}
 		//Log.d("Parceling", ids.size()+"");
 		firstNewCol = in.readByte();
 		nextId = in.readByte();
-		idArray = new ArrayList<Byte>(ids.keySet());
-		Collections.sort(idArray);
 	}
 	
 	@Override
@@ -458,4 +509,28 @@ public class ColorDecoder implements Parcelable {
 			return new ColorDecoder[size];
 		}
 	};
+
+	/**
+	 * Gets the id at the given position from the sorted list of ids. 
+	 * @param position of the id
+	 * @return Byte id at the given position
+	 */
+	public Byte getSortedId(int position) {
+		int i = 0;
+		for (Byte key : ids.keySet()) {
+			if (i == position) {
+				return key;
+			}
+			i++;
+		}
+		return null;
+	}
+
+	/**
+	 * Removes any colors that are not in the used colors set.
+	 * @param usedColors set of colors that are used
+	 */
+	public void removeUnusedColors(Set<Byte> usedColors) {
+		ids.keySet().retainAll(usedColors);
+	}
 }

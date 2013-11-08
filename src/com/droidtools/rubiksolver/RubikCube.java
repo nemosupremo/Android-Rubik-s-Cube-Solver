@@ -1553,6 +1553,7 @@ public class RubikCube {
 		            formatter.format("%02x", b);
 		        }
 		        stringState = formatter.toString();
+		        formatter.close();
 			}
 			return stringState;
 		}

@@ -8,8 +8,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Paint.Style;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -46,7 +46,11 @@ public class MoveNavigator extends SurfaceView implements
 			icons.put(entry.getKey(), icon);
 		}
 		
-		drawThread = new Thread(new Runnable() {
+		drawThread = createDrawThread();
+	}
+	
+	private Thread createDrawThread() {
+		return new Thread(new Runnable() {
 			@Override
 			public void run() {
 				while (mRunning) {
@@ -54,7 +58,9 @@ public class MoveNavigator extends SurfaceView implements
 					try {
 						c = mSurfaceHolder.lockCanvas(null);
 						synchronized (mSurfaceHolder) {
-							doDraw(c);
+							if (c != null) {
+								doDraw(c);
+							}	
 						}
 					} finally {
 						// do this in a finally so that if an exception is
@@ -95,13 +101,15 @@ public class MoveNavigator extends SurfaceView implements
 	public void surfaceCreated(SurfaceHolder holder) {
 		if (!isInEditMode()) {
 			setRunning(true);
+			if (drawThread == null) {
+				drawThread = createDrawThread();
+			}
 			drawThread.start();
 		}
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-		
 		boolean retry = true;
 		setRunning(false);
 		retry = true;
@@ -112,31 +120,50 @@ public class MoveNavigator extends SurfaceView implements
 			} catch (InterruptedException e) {
 			}
 		}
+		drawThread = null;
 		Log.d("SURFACE", "draw thread dead");
 	}
 	
 
 	public void doDraw(Canvas canvas) {
 		final int sectionSize = 50;
+		// Use a local copy of the position here because it could change
+		// at any time during the draw call. We just want to be consistent.
+		int position = mPosition;
 		int num = mCanvasWidth / sectionSize;
 		if  (num % 2 == 0) 
 			num--;
-		int s = (mPosition - num/2);
-		int e = (mPosition + num/2)+1;
+		int s = (position - num/2);
+		int e = (position + num/2)+1;
+		int leftBuffer = (mCanvasWidth - num * sectionSize) / 2;
 		int x;
+		
+		Paint clearPaint = new Paint();
+		//blackPaint.setStyle(Style.FILL);
+		clearPaint.setColor(Color.BLACK);
+		
+		Paint backPaint = new Paint(); 
+        //paint.setStyle(Style.FILL); 
+		backPaint.setARGB(255, 255, 80, 80);
+        
 		for (int i=s; i<e; i++) {
+			x = leftBuffer + sectionSize*(i-s);
+			Log.d("MOVENAV X:", ""+x+","+s+","+e+","+num+","+mCanvasWidth);
+			
 			if (i < 0 || i >= mSol.size()) {
+				canvas.drawRect(new RectF(x,0,x+sectionSize,sectionSize), clearPaint);
 				continue;
 			}
-			x = 10 + sectionSize*(i-s);
-			android.util.Log.d("MOVENAV X:", ""+x+","+s+","+e+","+num+","+mCanvasWidth);
-			if (i == mPosition) {
-				Paint paint = new Paint(); 
-		        paint.setStyle(Style.FILL); 
-		        paint.setARGB(255, 80, 80, 80); 
-		        canvas.drawRect(new RectF(x,0,x+sectionSize,sectionSize), paint);
+			if (i == position) {
+		        canvas.drawRect(new RectF(x,0,x+sectionSize,sectionSize), backPaint);
 			}
-			canvas.drawBitmap(icons.get(mSol.get(i).getMoveRep()), x+7, 7, null);
+			// TODO(bbrown): This offset probably can be precalculated.
+			Bitmap bitmap = icons.get(mSol.get(i).getMoveRep());
+			int width = bitmap.getWidth();
+			int height = bitmap.getHeight();
+			int leftOffset = (sectionSize - width) / 2;
+			int topOffset = (sectionSize - height) / 2;
+			canvas.drawBitmap(bitmap, x + leftOffset, topOffset, null);
 		}
 	}
 

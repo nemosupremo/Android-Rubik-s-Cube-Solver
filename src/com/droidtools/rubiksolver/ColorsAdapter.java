@@ -1,8 +1,8 @@
 package com.droidtools.rubiksolver;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import android.graphics.Bitmap;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -11,18 +11,15 @@ public class ColorsAdapter extends BaseAdapter {
 
 	List<Byte> mData;
 	ColorDecoder mDecoder;
-	List<Byte> idArray;
 	
 	public ColorsAdapter(ColorDecoder decoder) {
-		mData =  null; //new ArrayList<Integer>(decoder.getIds());
+		mData =  null;
 		mDecoder = decoder;
-		idArray = new ArrayList<Byte>(mDecoder.getIdArray());
 	}
 	
 	public ColorsAdapter(List<Byte> results, ColorDecoder decoder) {
-		mData =  results; //new ArrayList<Integer>(decoder.getIds());
+		mData =  results;
 		mDecoder = decoder;
-		idArray = null;
 	}
 
 	public void setData(List<Byte> data) {
@@ -31,22 +28,20 @@ public class ColorsAdapter extends BaseAdapter {
 	}
 	@Override
 	public int getCount() {
-		if (mData == null)
-		{
-			if (idArray.size() != mDecoder.getIdArray().size())
-				idArray = new ArrayList<Byte>(mDecoder.getIdArray());
+		if (mData == null) {
 			return mDecoder.colorSize();
-		}
-		else
+		} else {
 			return mData.size();
+		}
 	}
 
 	@Override
 	public Object getItem(int position) {
-		if (mData == null)
+		if (mData == null) {
 			return mData.get(position);
-		else
-			return idArray.get(position);
+		} else {
+			return mDecoder.getSortedId(position);
+		}
 	}
 
 	@Override
@@ -61,24 +56,23 @@ public class ColorsAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View convertView, ViewGroup parent) {
-		if (idArray != null && idArray.size() != mDecoder.getIdArray().size())
-		{
-			idArray = new ArrayList<Byte>(mDecoder.getIdArray());
-			notifyDataSetChanged();
-		}
 		View nv;
-		byte colorPos;
 		if (convertView == null) {
 			nv = new FaceletView(parent.getContext());
 		} else { // Reuse/Overwrite the View passed
 			nv = convertView;
 		}
-		if (mData == null) 
-			colorPos = idArray.get(position);
-		else
-			colorPos = mData.get(position);
-		((FaceletView) nv).updateView(String.format("Color %02d", colorPos),
-				mDecoder.getBitmap(colorPos));
+		
+		Byte colorId;
+		if (mData == null) {
+			colorId = mDecoder.getSortedId(position);
+		} else {
+			colorId = mData.get(position);
+		}
+
+		Bitmap bitmap = mDecoder.getBitmap(colorId);
+        ((FaceletView) nv).updateView(String.format("Color %02d", colorId), bitmap);
+
 		return nv;
 	}
 

@@ -3,7 +3,7 @@ package com.droidtools.rubiksolver;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.text.SimpleDateFormat;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -99,20 +99,16 @@ public class CheckFace extends Activity {
 			mNextFace.setText(R.string.nextFace);
 
 		mColorsList.setAdapter(new ColorsAdapter(decoder));
-		mColorsGrid.setAdapter(new FaceAdapter(b
-				.getByteArray("SCAN_RESULTS"), decoder));
+		mColorsGrid.setAdapter(new FaceAdapter(b.getByteArray("SCAN_RESULTS"), decoder));
 
-		mColorsGrid
-				.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
-					@Override
-					public void onItemClick(AdapterView<?> arg0, View arg1,
-							int position, long id) {
-						changeFacelet = position;
-						showDialog(DIALOG_CHECK);
-					}
-
-				});
+		mColorsGrid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+			@Override
+			public void onItemClick(AdapterView<?> arg0, View arg1,
+					int position, long id) {
+				changeFacelet = position;
+				showDialog(DIALOG_CHECK);
+			}
+		});
 
 		mNextFace.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
@@ -124,16 +120,14 @@ public class CheckFace extends Activity {
 				tryAgain();
 			}
 		});
-		
-		
-
 	}
 
 	@Override
 	protected  void onResume() {
 		super.onResume();
-		if (decoder == null || decoder.getIds().size() == 0)
+		if (decoder == null || decoder.colorSize() == 0) {
 			LoadCube.goHome(this);
+		}
 	}
 	
 	private void loadFaces(Bundle b) {
@@ -167,9 +161,8 @@ public class CheckFace extends Activity {
 			
 			@Override
 			public void onClick(DialogInterface dialog, int item) {
-				
-				((FaceAdapter) mColorsGrid.getAdapter()).mData[changeFacelet] = (Byte) mAdapter.getItem(item);
-				((FaceAdapter) mColorsGrid.getAdapter()).notifyDataSetChanged();
+				((FaceAdapter) mColorsGrid.getAdapter()).setItem(
+						changeFacelet, (Byte) mAdapter.getItem(item));
 				mColorsGrid.invalidate();
 				dialog.dismiss();
 				//mAdapter = null;
@@ -218,9 +211,6 @@ public class CheckFace extends Activity {
 		AlertDialog alert = builder.create();
 		return alert;
 	}
-	
-	
-
 
 	void tryAgain() {
 		for (byte i = decoder.firstNewCol; decoder.hasId(i); i++) {
@@ -252,13 +242,11 @@ public class CheckFace extends Activity {
 		case DIALOG_FIX_COLORS:
 			colorPage = 0;
 			colorFix = new ArrayList<List<Byte>>();
-			for (int i=0; i<6; i++) 
+			for (int i=0; i<6; i++) {
 				colorFix.add(new ArrayList<Byte>());
-			ungroupedColors = new ArrayList<Byte>();
-			List<Byte> idArr = decoder.getIdArray();
-			for (int i=1; i<idArr.size(); i++) 
-				ungroupedColors.add(idArr.get(i).byteValue());
-			colorFix.get(colorPage).add(idArr.get(0).byteValue());
+			}
+			ungroupedColors = new ArrayList<Byte>(decoder.getAllButFirstIds());
+			colorFix.get(colorPage).add(decoder.getFirstId());
 			
 			groupAdapter = new ColorsAdapter(colorFix.get(colorPage), decoder);
 			ungroupAdapter = new ColorsAdapter(ungroupedColors, decoder);
@@ -266,9 +254,9 @@ public class CheckFace extends Activity {
 			AlertDialog.Builder builder;
 			
 			Context mContext = this;
-			LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
-			View layout = inflater.inflate(R.layout.similar,
-			                               null);
+			LayoutInflater inflater =
+					(LayoutInflater) mContext.getSystemService(LAYOUT_INFLATER_SERVICE);
+			View layout = inflater.inflate(R.layout.similar, null);
 
 			LinearLayout layoutRoot = (LinearLayout) layout.findViewById(R.id.layout_root);
 			ListView ungroupedColorsLV = (ListView) layout.findViewById(R.id.ungroupedColors);
@@ -280,32 +268,25 @@ public class CheckFace extends Activity {
 			ungroupedColorsLV.setAdapter(ungroupAdapter);
 			groupedColorsLV.setAdapter(groupAdapter);
 			
-			
 			ungroupedColorsLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
 				@Override
-				public void onItemClick(AdapterView<?> arg0, View arg1,
-						int position, long id) {
+				public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
 					byte _id = ungroupedColors.get(position);
 					ungroupedColors.remove(position);
 					colorFix.get(colorPage).add(_id);
 					ungroupAdapter.notifyDataSetChanged();
 					groupAdapter.notifyDataSetChanged();
 				}
-
 			});
 			groupedColorsLV.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
 				@Override
-				public void onItemClick(AdapterView<?> arg0, View arg1,
-						int position, long id) {
+				public void onItemClick(AdapterView<?> arg0, View arg1, int position, long id) {
 					byte _id = colorFix.get(colorPage).get(position);
 					colorFix.get(colorPage).remove(position);
 					ungroupedColors.add(_id);
 					ungroupAdapter.notifyDataSetChanged();
 					groupAdapter.notifyDataSetChanged();
 				}
-
 			});
 			
 			prevButton.setOnClickListener(new OnClickListener() {
@@ -322,13 +303,9 @@ public class CheckFace extends Activity {
 				}
 			});
 			
-			
-			
-			
 			builder = new AlertDialog.Builder(mContext);
 			builder.setView(layout);
 			dialog = builder.create();
-			
 			
 			//ViewGroup.LayoutParams lp = layoutRoot.getLayoutParams();
 		    //lp.width = ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -348,7 +325,7 @@ public class CheckFace extends Activity {
 						groupAdapter.setData(colorFix.get(colorPage));
 						ungroupAdapter.notifyDataSetChanged();
 						groupAdapter.notifyDataSetChanged();
-						similarText.setText(String.format("Face %d/6", colorPage+1));
+						similarText.setText(String.format(getResources().getString(R.string.colorPageFormat), colorPage+1));
 						if (colorPage == 5)
 							nextSimilarButton.setText("Done");
 					}
@@ -378,7 +355,6 @@ public class CheckFace extends Activity {
 										}
 									}
 								}
-								
 							}
 							mDialog.dismiss();
 							nextFace();
@@ -408,6 +384,10 @@ public class CheckFace extends Activity {
 			return;
 		}*/
 		byte[] finalFace = ((FaceAdapter) mColorsGrid.getAdapter()).mData;
+		
+		// TODO(bbrown): This doesn't work because it makes a copy of the data, but I believe the
+		// fix colors dialog relies on the reference to the data so it can manipulate it. Crazy!
+		// byte[] finalFace = ((FaceAdapter) mColorsGrid.getAdapter()).getData();
 
 		String face = null;
 		Set<Byte> usedColors = new HashSet<Byte>();
@@ -449,17 +429,17 @@ public class CheckFace extends Activity {
 			}
 		}*/
 		//for (Map.Entry<Integer, Parcelable[]> entry : decoder.entrySet()) {
-		Set<Byte> ids = decoder.getIds();
-		for ( Byte id : ids)
-		{
-		    if (!usedColors.contains(id)) // auto unboxing again  :wink: 
-		       decoder.removeColor(id);
-		}
+
+		decoder.removeUnusedColors(usedColors);
 		((ColorsAdapter) mColorsList.getAdapter()).notifyDataSetChanged();
 		((FaceAdapter) mColorsGrid.getAdapter()).notifyDataSetChanged();
 		//showDialog(DIALOG_FIX_COLORS);
 		if (scanFace.equals("DOWN")) {
 			if (decoder.colorSize() == 6) {
+				// Disconnect the views from the adapters because they are backed by the decoder
+				// which will be cleared during the solution calculation.
+				mColorsList.setAdapter(null);
+				mColorsGrid.setAdapter(null);
 				new GetSolution().execute(frontFace, backFace, leftFace, rightFace, upFace, downFace);
 			} else if (decoder.colorSize() > 6) { 
 				showDialog(DIALOG_FIX_COLORS);
@@ -580,8 +560,7 @@ public class CheckFace extends Activity {
 				oos.close();
 
 				ContentValues cv = new ContentValues();
-				cv.put(HistoryProvider.NAME, new SimpleDateFormat(
-						"MMM dd hh:mm a").format(new Date(System
+				cv.put(HistoryProvider.NAME, DateFormat.getDateTimeInstance().format(new Date(System
 						.currentTimeMillis())));
 				cv.put(HistoryProvider.MOVES, baos.toByteArray());
 				cv.put(HistoryProvider.STATE, cubeState);

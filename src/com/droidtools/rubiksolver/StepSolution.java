@@ -1,12 +1,11 @@
 package com.droidtools.rubiksolver;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.util.SparseIntArray;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -21,7 +20,6 @@ public class StepSolution extends Activity implements Runnable {
 	Bundle bundle;
 	byte[] cubeState;
 	byte[] colorArray;
-	Map<Byte, Integer> colors;
 	CubeSurface cubeSurface;
 	MoveNavigator moveNav;
 	ImageButton play;
@@ -52,7 +50,6 @@ public class StepSolution extends Activity implements Runnable {
 		cubeState = bundle.getByteArray("CUBE_STATE");
 		colorArray = bundle.getByteArray("COLORS");
 		hid = bundle.getString("HID");
-		//colors = makeColors(colorArray);
 		
 		play = (ImageButton) findViewById(R.id.play);
 		pause = (ImageButton) findViewById(R.id.stop);
@@ -115,7 +112,6 @@ public class StepSolution extends Activity implements Runnable {
 		PowerManager pm = (PowerManager) getSystemService(POWER_SERVICE);
         wl = pm.newWakeLock(PowerManager.FULL_WAKE_LOCK, "DoNotDimScreen");
         counterText.setText(String.format("%d/%d", position+1, sol.size()));
-		
 	}
 	
 	@Override
@@ -138,7 +134,14 @@ public class StepSolution extends Activity implements Runnable {
 		moveNav.postInvalidate();
 		counterText.post(new Runnable() {
 	        public void run() {
-	        	counterText.setText(String.format("%d/%d", position+1, sol.size()));
+	        	int step = position + 1;
+	        	int size = sol.size();
+	        	if (step > size) {
+	        		counterText.setText(getString(R.string.solved));
+	        	} else {
+	        		counterText.setText(String.format(
+	        				getString(R.string.simpleCounter), position+1, sol.size()));	
+	        	}
 	        }
 	      });
 	}
@@ -149,7 +152,8 @@ public class StepSolution extends Activity implements Runnable {
 		moveNav.postInvalidate();
 		counterText.post(new Runnable() {
 	        public void run() {
-	        	counterText.setText(String.format("%d/%d", position+1, sol.size()));
+	        	counterText.setText(String.format(
+	        			getString(R.string.simpleCounter), position+1, sol.size()));
 	        }
 	      });
 	}
@@ -249,8 +253,8 @@ public class StepSolution extends Activity implements Runnable {
 		}
 	}
 	
-	protected Map<Integer, Integer> makeColors(byte[] colors) {
-		Map<Integer, Integer> ret = new HashMap<Integer, Integer>();
+	protected SparseIntArray makeColors(byte[] colors) {
+		SparseIntArray ret = new SparseIntArray();
 		for (int i=0; i<colors.length; i+=5) {
 			byte key = colors[i];
 			int col = (colors[i+1] << 24)

@@ -2,9 +2,9 @@
 <resources>
     <string name="hello">Hello World, LoadCube!</string>
     <string name="app_name">Rubiks Cube Solver</string>
-    <string name="actionbar_activity_not_found">Failed to open intent...</string>
+    <string name="actionbar_activity_not_found">Failed to open intent&#8230;</string>
     <string name="strInsTitle">Instructions</string>
-    <string name="strInstructions">For best results start by placing your cube on a flat surface. The first side you will have to take is the front. Match up the box that says TL with the top left corner of the cube, then press the camera button to take the picture. IMPORTANT : Remember which side is the FRONT, and which side was UP. This is the orientation of the cube that the solution will start out with. Then you will be asked to move onto the RIGHT. Simply turn the cube left so that the RIGHT side is not facing upwards. The UP face should still be the same. Take the picture than continue. Do this for the BACK then LEFT sides. Now orient the cube to the way you just started. Turn the cube down so that you are now looking at the UP face, and then take the picture. Then simarally do the same for the DOWN face. Inbetween these steps you will have the chance to make sure all colors are correct. You can start over at any time by clicking the menu button, then clicking start over. Once you are done the solution will appear on screen. The solution will be save automatically and you will can view all previous solutions by clicking the history button below. Have Fun!</string>
+    <string name="strInstructions">For best results start by placing your cube on a flat surface. The first side you will have to take is the front. Match up the box that says TL with the top left corner of the cube, then press the camera button to take the picture. IMPORTANT : Remember which side is the FRONT, and which side was UP. This is the orientation of the cube that the solution will start out with. Then you will be asked to move onto the RIGHT. Simply turn the cube left so that the RIGHT side is not facing upwards. The UP face should still be the same. Take the picture than continue. Do this for the BACK then LEFT sides. Now orient the cube to the way you just started. Turn the cube down so that you are now looking at the UP face, and then take the picture. Then simarally do the same for the DOWN face. Between these steps you will have the chance to make sure all colors are correct. You can start over at any time by clicking the menu button, then clicking start over. Once you are done the solution will appear on screen. The solution will be save automatically and you will can view all previous solutions by clicking the history button below. Have Fun!</string>
     <string name="front">front</string>
     <string name="right">right</string>
     <string name="back">back</string>
@@ -38,4 +38,7 @@ Source Code available at &lt;https://github.com/nemothekid/Android-Rubik-s-Cube-
     <string name="insStep5">Turn the entire cube left, then rotate it up. Make sure you are looking at the up face such that the down face is the front face.</string>
     <string name="insStep6">Turn the entire cube down so that you are looking at the down face from the front. Take the final picture and press solve.</string>
     <string name="insStep7">Solve!</string>
+    <string name="colorPageFormat">Color %1$d/6</string>
+    <string name="solved">Solved!</string>
+    <string name="simpleCounter">%1$d/%2$d</string>
 </resources>
