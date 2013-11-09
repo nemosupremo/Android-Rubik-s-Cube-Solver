@@ -1,5 +1,5 @@
 Rubik's Cube Solver
-For Android OS 2.1 (SDK Level 7)
+For Android OS 2.3.4 (SDK Level 10)
 
 Notes:
     Native C Solver by Eric Dietz <http://www.wrongway.org> (Licensed under GPL)
